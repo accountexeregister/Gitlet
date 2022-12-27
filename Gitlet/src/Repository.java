@@ -299,6 +299,7 @@ public class Repository {
 
     public static void reset(String commitId) {
         Commit commitToResetTo = null;
+        Stage stage = getStage();
         try {
             if (commitId.length() < SHA1_LENGTH) {
                 CommitIdTrie initialCommitIdTrie = getStartingComIdTrie();
@@ -310,22 +311,21 @@ public class Repository {
             System.exit(0);
         }
         Commit headCommit = getHeadCommit();
-        for (String fileName : CWD.list()) {
-            if (fileName.equals(".gitlet")) {
+        for (File file : CWD.listFiles()) {
+            if (file.getName().equals(".gitlet")) {
                 continue;
             }
-            if (!headCommit.isTracked((fileName)) && !commitToResetTo.fileExists(fileName)) {
+            if (untrckedAndWillBeOverwritten(headCommit, commitToResetTo, stage, file)) {
                 System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             }
-            if (headCommit.isTracked(fileName) && !commitToResetTo.fileExists(fileName)) {
-                Repository.rm(fileName);
+            if (headCommit.isTracked(file.getName()) && !commitToResetTo.fileExists(file.getName())) {
+                Repository.rm(file.getName());
             }
         }
         for (String fileName : commitToResetTo.getFileNames()) {
             Repository.checkout(commitId, fileName);
         }
-        Stage stage = getStage();
         stage.resetStage();
         Utils.writeContents(getHeadBranchFile(), commitId);
 
@@ -464,7 +464,7 @@ public class Repository {
     public static void rm(String fileName) {
         Commit headCommit = getHeadCommit();
         Stage stage = getStage();
-        if (!stage.isStagedForAddition(fileName) && headCommit.isTracked(fileName)) {
+        if (!stage.isStagedForAddition(fileName) && !headCommit.isTracked(fileName)) {
             System.out.println("No reason to remove the file.");
             System.exit(0);
         }
@@ -502,10 +502,16 @@ public class Repository {
         stage.resetStage();
     }
 
-    private static boolean untrckedAndWillBeOverwritten(Commit headCommit, Commit branchCommitToCheckout, Stage stage, File currentFile) {
+    private static boolean untrckedAndWillBeOverwritten(Commit headCommit, Commit commitToSwitchTo, Stage stage, File currentFile) {
         String cwdFileSHA1 = Utils.sha1(Utils.readContentsAsString(currentFile));
-        return (headCommit.isStageable(stage, currentFile.getName(), cwdFileSHA1)) &&
-                (!branchCommitToCheckout.fileExists(currentFile.getName()) || !(branchCommitToCheckout.getFileSHA1(currentFile.getName()).equals(cwdFileSHA1)));
+        if (headCommit.isStageable(stage, currentFile.getName(), cwdFileSHA1)) {
+            if (!commitToSwitchTo.fileExists(currentFile.getName())) {
+                return false;
+            }
+
+            return !(cwdFileSHA1.equals(commitToSwitchTo.getFileSHA1(currentFile.getName())));
+        }
+        return false;
     }
 
     public static void checkoutBranch(String branchName) {
