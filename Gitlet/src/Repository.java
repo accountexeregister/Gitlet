@@ -64,6 +64,9 @@ public class Repository {
             headNextStagedCommit.addCommitDetail(message);
             writeCommit(headNextStagedCommit, headNextStagedCommit.toSHA1(), OBJECTS);
             createBlobs(headNextStagedCommit);
+            // Remove stage commit sha1 and make a new one
+            deleteFile(Utils.join(STAGE, headNextStagedCommit.toStatusSHA1()));
+            headCommit.resetStage();
             headCommit = headNextStagedCommit;
         } else {
             Commit initCommit = Commit.createInitCommit();

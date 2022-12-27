@@ -117,5 +117,10 @@ public class Commit implements Serializable {
         return new File(getFileSHA1(fileName));
     }
 
-
+    public void resetStage() {
+        Commit nextStageCommit = new Commit();
+        nextStageCommit.setParent(this);
+        this.setNext(nextStageCommit);
+        nextStageCommit.setStage(this);
+    }
 }
