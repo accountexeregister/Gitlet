@@ -56,6 +56,13 @@ public class Main {
             case "status":
                 Repository.status();
                 break;
+            case "branch":
+                if (args.length < 2) {
+                    return;
+                }
+                String branchName = args[1];
+                Repository.branch(branchName);
+                break;
         }
     }
 }

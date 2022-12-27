@@ -57,6 +57,23 @@ public class Repository {
         return fileName.substring(0, fileName.length() - 4);
     }
 
+    // Creates branch with name given by branchName
+    public static void branch(String branchName) {
+        String branchFileName = branchName + ".txt";
+        File branchFile = Utils.join(REFS_HEADS, branchFileName);
+        if (branchFile.exists()) {
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
+        try {
+            branchFile.createNewFile();
+        } catch (IOException e) {
+            System.exit(0);
+        }
+        String headCommitSHA1 = getHeadCommitSHA1();
+        Utils.writeContents(branchFile, headCommitSHA1);
+    }
+
     public static void status() {
         FileComparator fileComparator = new FileComparator();
         System.out.println("=== Branches ===");
@@ -132,7 +149,7 @@ public class Repository {
     }
 
     private static boolean isHead(File branchFile) {
-        return Utils.readContentsAsString(getHeadBranchFile()).equals(Utils.readContentsAsString(branchFile));
+        return (Utils.readContentsAsString(HEAD) + ".txt").equals(branchFile.getName());
     }
 
     public static void find(String message) {
