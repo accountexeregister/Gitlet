@@ -176,6 +176,9 @@ public class Repository {
     // Create blob in .gitlet objects folder for given file
     private static void createBlob(Commit commit, String fileName) {
         String fileSHA1 = commit.getFileSHA1(fileName);
+        if (fileSHA1 == null) {
+            return;
+        }
         File blobFile = createAndGetDirectoryAndFile(fileSHA1, OBJECTS);
         Utils.writeContents(blobFile, Utils.readContentsAsString(Utils.join(CWD, fileName)));
     }

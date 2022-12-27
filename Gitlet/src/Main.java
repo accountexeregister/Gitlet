@@ -38,6 +38,14 @@ public class Main {
                         Repository.checkout(commitId, fileNameCheckout);
                     }
                 }
+                break;
+            case "rm":
+                if (args.length < 2) {
+                    return;
+                }
+                String fileNameToRm = args[1];
+                Repository.rm(fileNameToRm);
+                break;
         }
     }
 }
