@@ -48,7 +48,7 @@ public class CommitIdTrie implements Serializable {
         saveTrie();
     }
 
-    private String searchCommitId(String commitId) {
+    public String searchCommitId(String commitId) {
         return searchCommitId(commitId, null);
     }
 

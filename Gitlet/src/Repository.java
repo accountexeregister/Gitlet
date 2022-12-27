@@ -475,6 +475,10 @@ public class Repository {
 
     public static void checkout(String commitId, String fileName) {
         try {
+            if (commitId.length() < SHA1_LENGTH) {
+                CommitIdTrie initialCommitIdTrie = getStartingComIdTrie();
+                commitId = initialCommitIdTrie.searchCommitId(commitId);
+            }
             Commit checkedOutCommit = getCommit(commitId, OBJECTS);
             if (!checkedOutCommit.fileExists(fileName)) {
                 System.out.println("File does not exist in that commit.");
