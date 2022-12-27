@@ -20,6 +20,7 @@ public class Repository {
      * The .gitlet directory.
      */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
+    public static final File STAGE = join(GITLET_DIR, "stage");
     public static final File REFS = join(GITLET_DIR, "refs");
     public static final File REFS_HEADS = join(REFS, "heads");
     // File that stores which branch it is pointing at
@@ -29,6 +30,7 @@ public class Repository {
 
     public static void initGitlet() {
         GITLET_DIR.mkdir();
+        STAGE.mkdir();
         Commit initCommit = Commit.createInitCommit();
         REFS.mkdir();
         REFS_HEADS.mkdir();
@@ -44,9 +46,24 @@ public class Repository {
         } catch (IOException e) {
             System.exit(0);
         }
-        createCommitDirectory(initCommit);
+        createCommitDirectory(initCommit, OBJECTS);
         Utils.writeContents(mainBranch, initCommit.toSHA1());
         Utils.writeContents(HEAD, Utils.readContentsAsString(mainBranch));
+        commit();
+    }
+
+    public static void add(String fileName) {
+        Commit headCommit = getHeadCommit();
+        headCommit.stageFile(fileName);
+    }
+
+    public static void commit() {
+        Commit headCommit = getHeadCommit();
+        Commit nextStagedCommit = new Commit();
+        createCommitDirectory(nextStagedCommit, STAGE);
+        headCommit.setNext(nextStagedCommit);
+        nextStagedCommit.setParent(headCommit);
+        nextStagedCommit.setStage(headCommit);
     }
 
     public static void log() {
@@ -58,31 +75,31 @@ public class Repository {
             System.out.println("Date: " + currentCommit.getDate());
             System.out.println(currentCommit.getMessage());
             System.out.println();
-            currentCommit = getCommit(currentCommit.getParent());
+            currentCommit = getCommit(currentCommit.getParent(), OBJECTS);
         }
     }
 
-    // Returns commit object based on SHA1 commit
-    private static Commit getCommit(String commitSHA1) {
+    // Returns commit object based on SHA1 commit starting from directory
+    public static Commit getCommit(String commitSHA1, File startingDirectory) {
         if (commitSHA1 == null) {
             return null;
         }
         String firstTwoCharOfCommitID = commitSHA1.substring(0, 2);
         String restOfCommitID = commitSHA1.substring(2);
-        File firstTwoCharComIdDir = Utils.join(OBJECTS, firstTwoCharOfCommitID);
+        File firstTwoCharComIdDir = Utils.join(startingDirectory, firstTwoCharOfCommitID);
         File restOfComIdFile = Utils.join(firstTwoCharComIdDir, restOfCommitID + ".txt");
         return Utils.readObject(restOfComIdFile, Commit.class);
     }
 
     private static Commit getHeadCommit() {
-        return getCommit(Utils.readContentsAsString(HEAD));
+        return getCommit(Utils.readContentsAsString(HEAD), OBJECTS);
     }
 
-    private static void createCommitDirectory(Commit commit) {
+    private static void createCommitDirectory(Commit commit, File startingDirectory) {
         String commitSHA1 = commit.toSHA1();
         String firstTwoCharOfCommitID = commitSHA1.substring(0, 2);
         String restOfCommitID = commitSHA1.substring(2);
-        File firstTwoCharComIdDir = Utils.join(OBJECTS, firstTwoCharOfCommitID);
+        File firstTwoCharComIdDir = Utils.join(startingDirectory, firstTwoCharOfCommitID);
         if (!(firstTwoCharComIdDir.exists())) {
             firstTwoCharComIdDir.mkdir();
         }
