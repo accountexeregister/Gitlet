@@ -9,7 +9,6 @@ import java.util.Set;
 public class Stage implements Serializable {
     private Map<String, String> stageFileToSha1 = new HashMap<>();
     private Map<String, Boolean> stageRemoveFileToSha1 = new HashMap<>();
-    private Map<String, String> tracks = new HashMap<>();
 
     public void stageFile(Commit headCommit, String fileName) {
 
@@ -22,6 +21,11 @@ public class Stage implements Serializable {
             stageFileToSha1.remove(fileName);
         }
         saveStage();
+    }
+
+    public void resetStage() {
+        stageFileToSha1 = new HashMap<String, String>();
+        stageRemoveFileToSha1 = new HashMap<String, Boolean>();
     }
 
     public boolean isStagedForAddition(String fileName) {

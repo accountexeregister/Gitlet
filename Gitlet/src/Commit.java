@@ -47,6 +47,11 @@ public class Commit implements Serializable {
         for (String fileName : stage.getStageFileNames()) {
             fileToSHA1.put(fileName, stage.getStagedForAdditionFileSHA1(fileName));
         }
+        saveCommit();
+    }
+
+    public void saveCommit() {
+        Repository.writeCommit(this, this.toSHA1(), Repository.OBJECTS);
     }
 
     public boolean isStageExists() {

@@ -226,15 +226,14 @@ public class Repository {
                 System.out.println("Please enter a commit message.");
                 System.exit(0);
             }
-            Commit headNextStagedCommit = headCommit.getNextStagedCommit();
-            headNextStagedCommit.addCommitDetail(message);
-            writeCommit(headNextStagedCommit, headNextStagedCommit.toSHA1(), OBJECTS);
-            writeCommit(headNextStagedCommit, headNextStagedCommit.toSHA1(), COMMITS);
-            createBlobs(headNextStagedCommit);
-            // Remove stage commit sha1 and make a new one
-            deleteFile(Utils.join(STAGE, headNextStagedCommit.toStatusSHA1()));
-            headCommit.resetStage();
-            headCommit = headNextStagedCommit;
+            Commit nextCommit = new Commit();
+            nextCommit.setParent(headCommit);
+            headCommit.setNext(nextCommit);
+            nextCommit.addFilesFromStage(headCommit, stage);
+            headCommit = nextCommit;
+            headCommit.addCommitDetail(message);
+            createBlobs(headCommit);
+            stage.resetStage();
         } else {
             Commit initCommit = Commit.createInitCommit();
             headCommit = initCommit;
