@@ -502,6 +502,12 @@ public class Repository {
         stage.resetStage();
     }
 
+    private static boolean untrckedAndWillBeOverwritten(Commit headCommit, Commit branchCommitToCheckout, Stage stage, File currentFile) {
+        String cwdFileSHA1 = Utils.sha1(Utils.readContentsAsString(currentFile));
+        return (headCommit.isStageable(stage, currentFile.getName(), cwdFileSHA1)) &&
+                (!branchCommitToCheckout.fileExists(currentFile.getName()) || !(branchCommitToCheckout.getFileSHA1(currentFile.getName()).equals(cwdFileSHA1)));
+    }
+
     public static void checkoutBranch(String branchName) {
         String branchFileName = branchName + ".txt";
         File branchFile = Utils.join(REFS_HEADS, branchFileName);
@@ -523,9 +529,7 @@ public class Repository {
             if (file.getName().equals(".gitlet")) {
                 continue;
             }
-            String cwdFileSHA1 = Utils.sha1(Utils.readContentsAsString(file));
-            if (headCommit.isStageable(stage, file.getName(), cwdFileSHA1) &&
-                    (!branchCommit.fileExists(file.getName()) || !(branchCommit.getFileSHA1(file.getName()).equals(cwdFileSHA1)))) {
+            if (untrckedAndWillBeOverwritten(headCommit, branchCommit, stage, file)) {
                 System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             } else if (!branchCommit.fileExists(file.getName())) {
