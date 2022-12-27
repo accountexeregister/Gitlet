@@ -81,11 +81,23 @@ public class Commit implements Serializable {
         date = cal.getTime();
     }
 
-    public void resetStage() {
+    public boolean isAtEndOfBranch() {
+        return getNextStagedCommit().getNextStagedCommit() == null;
+    }
+
+    // Returns true if its a staging commit and not actual commit
+    public boolean isNotACommit() {
+        return message == null && date == null;
+    }
+
+    public Commit resetStage() {
         Commit nextStageCommit = new Commit();
         nextStageCommit.setParent(this);
         this.setNext(nextStageCommit);
         nextStageCommit.setStage(this);
+        Repository.writeCommit(nextStageCommit, nextStageCommit.toStatusSHA1(), Repository.STAGE);
+        Repository.writeCommit(this, this.toSHA1(), Repository.OBJECTS);
+        return nextStageCommit;
     }
 
     public Commit getNextStagedCommit() {

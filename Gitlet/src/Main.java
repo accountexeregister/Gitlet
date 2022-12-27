@@ -26,12 +26,18 @@ public class Main {
                 Repository.deleteFiles();
                 break;
             case "checkout":
-                if (args.length == 3) {
+                if (args.length < 2) {
+                    return;
+                }
+                if (args.length == 2) {
+                    String branchToCheckout = args[1];
+                    Repository.checkoutBranch(branchToCheckout);
+                } else if (args.length == 3) {
                     if (args[1].equals("--")) {
                         String fileNameCheckout = args[2];
                         Repository.checkoutHead(fileNameCheckout);
                     }
-                } else if (args.length == 4) {
+                } else {
                     String commitId = args[1];
                     if (args[2].equals("--")) {
                         String fileNameCheckout = args[3];

@@ -382,6 +382,10 @@ public class Repository {
         }
     }
 
+    private static String getBranchCommitID(String branchFileName) {
+        return Utils.readContentsAsString(Utils.join(REFS_HEADS, branchFileName));
+    }
+
     public static void checkout(String commitId, String fileName) {
         try {
             Commit checkedOutCommit = getCommit(commitId, OBJECTS);
@@ -395,6 +399,60 @@ public class Repository {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
+    }
+
+    public static void checkoutBranch(String branchName) {
+        String branchFileName = branchName + ".txt";
+        File branchFile = Utils.join(REFS_HEADS, branchFileName);
+        if (!branchFile.exists()) {
+            System.out.println("No such branch exists.");
+            System.exit(0);
+        }
+        if (isHead(branchFile)) {
+            System.out.println("No need to checkout the current branch.");
+            System.exit(0);
+        }
+        String branchCommitId = getBranchCommitID(branchFileName);
+        Commit branchCommit = getCommit(branchCommitId, OBJECTS);
+        List<File> filesOverriden = new ArrayList<>();
+        List<File> filesToDelete = new ArrayList<>();
+        Commit headCommit = getHeadCommit();
+        for (File file : Utils.join(CWD).listFiles()) {
+            if (file.getName().equals(".gitlet")) {
+                continue;
+            }
+            if (!headCommit.fileExists(file.getName()) && !branchCommit.fileExists(file.getName())) {
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            } else if (!branchCommit.fileExists(file.getName())) {
+                filesToDelete.add(file);
+            } else {
+                filesOverriden.add(file);
+            }
+        }
+        for (String fileName : branchCommit.getFileNames()) {
+            if (fileName == null) {
+                continue;
+            }
+            File file = Utils.join(CWD, fileName);
+            if (file.exists()) {
+                continue;
+            }
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                System.exit(0);
+            }
+            filesOverriden.add(file);
+        }
+        for (File fileOverriden : filesOverriden) {
+            Utils.writeContents(fileOverriden, getBlobContents(branchCommit, fileOverriden.getName()));
+        }
+        for (File fileToDelete : filesToDelete) {
+            fileToDelete.delete();
+        }
+        headCommit.resetStage();
+        Utils.writeContents(HEAD, branchName);
     }
 
     public static void checkoutHead(String fileName) {
