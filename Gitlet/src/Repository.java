@@ -816,6 +816,9 @@ public class Repository {
     private static boolean isModifiedFromSplitPoint(Commit commit, Commit splitPoint, String fileName) {
         String commitFileSHA1 = commit.getFileSHA1(fileName);
         String splitPointFileSHA1 = splitPoint.getFileSHA1(fileName);
+        if (commitFileSHA1 == null) {
+            return splitPointFileSHA1 != null;
+        }
         return !commitFileSHA1.equals(splitPointFileSHA1);
     }
 
