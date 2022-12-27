@@ -464,6 +464,10 @@ public class Repository {
     public static void rm(String fileName) {
         Commit headCommit = getHeadCommit();
         Stage stage = getStage();
+        if (!stage.isStagedForAddition(fileName) && headCommit.isTracked(fileName)) {
+            System.out.println("No reason to remove the file.");
+            System.exit(0);
+        }
         if (stage.isStagedForAddition(fileName)) {
             stage.unstage(fileName);
         }
