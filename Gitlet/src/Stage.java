@@ -1,11 +1,12 @@
 import Utilities.Utils;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class Stage {
+public class Stage implements Serializable {
     private Map<String, String> stageFileToSha1 = new HashMap<>();
     private Map<String, String> stageRemoveFileToSha1 = new HashMap<>();
     private Map<String, String> tracks = new HashMap<>();
@@ -52,6 +53,10 @@ public class Stage {
 
     public boolean isStageExists(Commit headCommit) {
         return !stageFileToSha1.isEmpty() || !stageRemoveFileToSha1.isEmpty();
+    }
+
+    public void saveStage() {
+        Utils.writeObject(Repository.STAGE, this);
     }
 
 }
