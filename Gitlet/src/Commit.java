@@ -16,13 +16,15 @@ public class Commit implements Serializable {
     // List of files stored by the commit
     private List<String> fileList = new ArrayList<>();
 
-    // Creates the initial commit by creating initial commit message, setting date to epoch time and setting its parent to null
-    public Commit(String message) {
+    public Commit() {
+        parent = null;
+    }
+
+    public void addCommitDetail(String message) {
         this.message = message;
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
         date = cal.getTime();
-        parent = null;
     }
 
     public void setNext(Commit nextCommitStaged) {
@@ -47,7 +49,8 @@ public class Commit implements Serializable {
 
     // Factory method to create initial commit by calling private constructor Commit()
     public static Commit createInitCommit() {
-        Commit commit = new Commit("initial commit");
+        Commit commit = new Commit();
+        commit.message = "initial commit";
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
         cal.setTimeInMillis(0);

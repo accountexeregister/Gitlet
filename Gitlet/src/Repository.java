@@ -54,27 +54,29 @@ public class Repository {
     public static void add(String fileName) {
         Commit headCommit = getHeadCommit();
         headCommit.stageFile(fileName);
+        writeCommit(headCommit.getNextStagedCommit(), headCommit.getNextStagedCommit().toStatusSHA1(), STAGE);
     }
 
     public static void commit(String message) {
         Commit headCommit = getHeadCommit();
         File headBranchFile = getHeadBranchFile();
         if (headCommit != null) {
-            writeCommit(headCommit.getNextStagedCommit(), headCommit.getNextStagedCommit().toSHA1(), OBJECTS);
-            createBlobs(headCommit.getNextStagedCommit());
-            headCommit = getCommit(headCommit.getNextStagedCommit().toSHA1(), OBJECTS);
-            // Advance branch and head pointer
-            // Utils.writeContents(headBranchFile, headCommit.getNextStagedCommitString());
+            Commit headNextStagedCommit = headCommit.getNextStagedCommit();
+            headNextStagedCommit.addCommitDetail(message);
+            writeCommit(headNextStagedCommit, headNextStagedCommit.toSHA1(), OBJECTS);
+            createBlobs(headNextStagedCommit);
+            headCommit = headNextStagedCommit;
         } else {
             Commit initCommit = Commit.createInitCommit();
             headCommit = initCommit;
         }
-        Commit nextStagedCommit = new Commit(message);
+        Commit nextStagedCommit = new Commit();
         nextStagedCommit.setParent(headCommit);
         nextStagedCommit.setStage(headCommit);
         headCommit.setNext(nextStagedCommit);
         writeCommit(nextStagedCommit, nextStagedCommit.toStatusSHA1(), STAGE);
         writeCommit(headCommit, headCommit.toSHA1(), OBJECTS);
+        // Advance branch that is pointed by head
         Utils.writeContents(headBranchFile, headCommit.toSHA1());
     }
 
