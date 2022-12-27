@@ -286,6 +286,10 @@ public class Repository {
         Utils.writeContents(headBranchFile, headCommit.toSHA1());
     }
 
+    private static CommitIdTrie getStartingComIdTrie() {
+        return Utils.readObject(COMMIT_ID_TRIE, CommitIdTrie.class);
+    }
+    
     public static void commit(String message) {
         commit(message, null);
     }

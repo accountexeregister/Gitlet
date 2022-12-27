@@ -31,6 +31,7 @@ public class CommitIdTrie implements Serializable {
             commitIdTriesArr[commitIdCharHexadecimal].addCommitId(commitId);
             this.commitId = null;
         }
+        saveTrie();
     }
 
     public String searchCommitId(String commitId, CommitIdTrie currentTrie) {
