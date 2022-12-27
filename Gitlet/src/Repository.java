@@ -508,4 +508,44 @@ public class Repository {
     public static void checkoutHead(String fileName) {
         checkout(getHeadCommitSHA1(), fileName);
     }
+
+    public static void getSplitPointMessage(String branchName) {
+        String branchCommitId = getBranchCommitID(branchName + ".txt");
+        Commit branchCommit = getCommit(branchCommitId, OBJECTS);
+        Commit headCommit = getHeadCommit();
+        System.out.println(getSplitPoint(headCommit, branchCommit).getMessage());
+    }
+
+    private static Commit getSplitPoint(Commit currentCommit, Commit givenCommit) {
+        if (currentCommit == null || givenCommit == null) {
+            return null;
+        }
+        if (currentCommit.equals(givenCommit)) {
+            return currentCommit;
+        }
+
+        Commit currentCommitParentWithBranches = currentCommit;
+        Commit givenCommitParentWithBranches = givenCommit;
+
+        while (currentCommitParentWithBranches != null && !currentCommitParentWithBranches.hasMultipleNexts()) {
+            if (currentCommitParentWithBranches.equals(givenCommit)) {
+                return givenCommit;
+            }
+            currentCommitParentWithBranches = getCommit(currentCommitParentWithBranches.getFirstParent(), OBJECTS);
+        }
+
+        while (givenCommitParentWithBranches != null && !givenCommitParentWithBranches.hasMultipleNexts()) {
+            if (givenCommitParentWithBranches.equals(currentCommit)) {
+                return givenCommit;
+            }
+            givenCommitParentWithBranches = getCommit(givenCommitParentWithBranches.getFirstParent(), OBJECTS);
+        }
+
+        Commit a = getSplitPoint(currentCommitParentWithBranches, givenCommit);
+        Commit b = getSplitPoint(currentCommit, givenCommitParentWithBranches);
+        if (a != null) {
+            return a;
+        }
+        return b;
+    }
 }

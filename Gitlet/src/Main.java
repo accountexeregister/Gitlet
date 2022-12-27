@@ -86,6 +86,13 @@ public class Main {
                 String commitIdToReset = args[1];
                 Repository.reset(commitIdToReset);
                 break;
+            case "splitpoint":
+                if (args.length < 2) {
+                    return;
+                }
+                String branchFileName = args[1];
+                Repository.getSplitPointMessage(branchFileName);
+                break;
         }
     }
 }

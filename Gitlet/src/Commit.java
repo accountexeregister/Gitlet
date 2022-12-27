@@ -127,4 +127,22 @@ public class Commit implements Serializable {
     public Set<String> getFileNames() {
         return fileToSHA1.keySet();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null) {
+            return false;
+        }
+
+        if (this.getClass() != o.getClass()) {
+            return false;
+        }
+
+        Commit oCommit = (Commit) o;
+        return this.toSHA1().equals(oCommit.toSHA1());
+    }
 }
