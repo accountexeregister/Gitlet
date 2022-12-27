@@ -67,16 +67,16 @@ public class Repository {
 
     public static void commit(String message) {
         Commit headCommit = getHeadCommit();
-        if (!headCommit.isStageExists()) {
-            System.out.println("No changes added to the commit.");
-            System.exit(0);
-        }
-        if (message.length() < 1) {
-            System.out.println("Please enter a commit message.");
-            System.exit(0);
-        }
         File headBranchFile = getHeadBranchFile();
         if (headCommit != null) {
+            if (!headCommit.isStageExists()) {
+                System.out.println("No changes added to the commit.");
+                System.exit(0);
+            }
+            if (message.length() < 1) {
+                System.out.println("Please enter a commit message.");
+                System.exit(0);
+            }
             Commit headNextStagedCommit = headCommit.getNextStagedCommit();
             headNextStagedCommit.addCommitDetail(message);
             writeCommit(headNextStagedCommit, headNextStagedCommit.toSHA1(), OBJECTS);
@@ -226,7 +226,7 @@ public class Repository {
     public static void checkout(String commitId, String fileName) {
         try {
             Commit checkedOutCommit = getCommit(commitId, OBJECTS);
-            if (checkedOutCommit.fileExists(fileName)) {
+            if (!checkedOutCommit.fileExists(fileName)) {
                 System.out.println("File does not exist in that commit.");
                 System.exit(0);
             }

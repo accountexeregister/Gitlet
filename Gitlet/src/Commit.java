@@ -108,6 +108,7 @@ public class Commit implements Serializable {
             stageExists = false;
         }
         Repository.writeCommit(nextStagedCommitObj, nextStagedCommitObj.toStatusSHA1(), Repository.STAGE);
+        Repository.writeCommit(this, this.toSHA1(), Repository.OBJECTS);
     }
 
     // Sets the stage for the commit which is in staging mode (Must only be called for commit about to be commited next
