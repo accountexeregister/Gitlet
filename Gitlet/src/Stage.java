@@ -50,4 +50,8 @@ public class Stage {
         return stageRemoveFileToSha1.keySet();
     }
 
+    public boolean isStageExists(Commit headCommit) {
+        return !stageFileToSha1.isEmpty() || !stageRemoveFileToSha1.isEmpty();
+    }
+
 }
