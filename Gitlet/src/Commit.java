@@ -13,32 +13,15 @@ public class Commit implements Serializable {
     private String nextStagedCommit;
     // Maps file name to its SHA1
     private Map<String, String> fileToSHA1 = new HashMap<>();
+    /*
     // List of files stored by the commit
     private List<String> fileList = new ArrayList<>();
+     */
     // Checks if a file has been staged on this commit
     private boolean stageExists = false;
 
-    public Commit() {
-        parent = null;
-    }
-
-    public void addCommitDetail(String message) {
-        this.message = message;
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
-        date = cal.getTime();
-    }
-
     public void setNext(Commit nextCommitStaged) {
         this.nextStagedCommit = nextCommitStaged.toStatusSHA1();
-    }
-
-    public List<String> getFileList() {
-        return fileList;
-    }
-
-    public String getFileSHA1(String fileName) {
-        return fileToSHA1.get(fileName);
     }
 
     public String getNextStagedCommitString() {
@@ -72,6 +55,72 @@ public class Commit implements Serializable {
         this.parent = parent.toSHA1();
     }
 
+    public Commit() {
+        parent = null;
+    }
+
+    public void addCommitDetail(String message) {
+        this.message = message;
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
+        date = cal.getTime();
+    }
+
+    public void resetStage() {
+        Commit nextStageCommit = new Commit();
+        nextStageCommit.setParent(this);
+        this.setNext(nextStageCommit);
+        nextStageCommit.setStage(this);
+    }
+
+    public Commit getNextStagedCommit() {
+        return Repository.getCommit(nextStagedCommit, Repository.STAGE);
+    }
+
+    public boolean isStageable(String fileName, String fileToAddSHA1) {
+        return fileToSHA1.get(fileName) == null || !(fileToSHA1.get(fileName).equals(fileToAddSHA1));
+    }
+
+    public void stageFile(String fileName) {
+        Commit nextStagedCommitObj = getNextStagedCommit();
+        File fileToAdd = Utils.join(Repository.CWD, fileName);
+        String fileToAddSHA1 = Utils.sha1(Utils.readContentsAsString(fileToAdd));
+        if (isStageable(fileName, fileToAddSHA1)) {
+            nextStagedCommitObj.fileToSHA1.put(fileName, fileToAddSHA1);
+            stageExists = true;
+        } else {
+            nextStagedCommitObj.fileToSHA1.put(fileName, null);
+            stageExists = false;
+        }
+        Repository.writeCommit(nextStagedCommitObj, nextStagedCommitObj.toStatusSHA1(), Repository.STAGE);
+        Repository.writeCommit(this, this.toSHA1(), Repository.OBJECTS);
+    }
+
+    // Sets the stage for the commit which is in staging mode (Must only be called for commit about to be commited next
+    public void setStage(Commit parent) {
+        for (String fileName : parent.fileToSHA1.keySet()) {
+            fileToSHA1.put(fileName, parent.fileToSHA1.get(fileName));
+        }
+    }
+
+    /*
+    public List<String> getFileList() {
+        return fileList;
+    }
+    */
+
+    public File getFile(String fileName) {
+        return new File(getFileSHA1(fileName));
+    }
+
+    public boolean fileExists(String fileName) {
+        return getFileSHA1(fileName) != null;
+    }
+
+    public String getFileSHA1(String fileName) {
+        return fileToSHA1.get(fileName);
+    }
+
     // Factory method to create initial commit by calling private constructor Commit()
     public static Commit createInitCommit() {
         Commit commit = new Commit();
@@ -97,59 +146,14 @@ public class Commit implements Serializable {
     }
 
     public String toSHA1() {
-        return Utils.sha1(this.date.toString() + this.message + this.fileList + this.fileToSHA1 + this.parent);
+        return Utils.sha1(this.date.toString() + this.message + this.fileToSHA1 + this.parent);
     }
 
     public String toStatusSHA1() {
         return parent;
     }
 
-    public Commit getNextStagedCommit() {
-        return Repository.getCommit(nextStagedCommit, Repository.STAGE);
-    }
-
-    public boolean isStageable(String fileName, String fileToAddSHA1) {
-        return fileToSHA1.get(fileName) == null || !(fileToSHA1.get(fileName).equals(fileToAddSHA1));
-    }
-
-    public void stageFile(String fileName) {
-        Commit nextStagedCommitObj = getNextStagedCommit();
-        File fileToAdd = Utils.join(Repository.CWD, fileName);
-        String fileToAddSHA1 = Utils.sha1(Utils.readContentsAsString(fileToAdd));
-        if (isStageable(fileName, fileToAddSHA1)) {
-            if (fileToSHA1.get(fileName) == null) {
-                nextStagedCommitObj.fileList.add(fileName);
-            }
-            nextStagedCommitObj.fileToSHA1.put(fileName, fileToAddSHA1);
-            stageExists = true;
-        } else {
-            nextStagedCommitObj.fileToSHA1.put(fileName, null);
-            stageExists = false;
-        }
-        Repository.writeCommit(nextStagedCommitObj, nextStagedCommitObj.toStatusSHA1(), Repository.STAGE);
-        Repository.writeCommit(this, this.toSHA1(), Repository.OBJECTS);
-    }
-
-    // Sets the stage for the commit which is in staging mode (Must only be called for commit about to be commited next
-    public void setStage(Commit parent) {
-        for (String fileName : parent.fileList) {
-            fileList.add(fileName);
-            fileToSHA1.put(fileName, parent.fileToSHA1.get(fileName));
-        }
-    }
-
-    public File getFile(String fileName) {
-        return new File(getFileSHA1(fileName));
-    }
-
-    public boolean fileExists(String fileName) {
-        return getFileSHA1(fileName) != null;
-    }
-
-    public void resetStage() {
-        Commit nextStageCommit = new Commit();
-        nextStageCommit.setParent(this);
-        this.setNext(nextStageCommit);
-        nextStageCommit.setStage(this);
+    public Set<String> getFileNames() {
+        return fileToSHA1.keySet();
     }
 }

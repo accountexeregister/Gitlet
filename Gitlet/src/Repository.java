@@ -168,7 +168,7 @@ public class Repository {
 
     // Create blobs for the commit about to be created
     private static void createBlobs(Commit commit) {
-        for (String fileName : commit.getFileList()) {
+        for (String fileName : commit.getFileNames()) {
             createBlob(commit, fileName);
         }
     }
