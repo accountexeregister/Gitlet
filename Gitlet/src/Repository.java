@@ -1,17 +1,9 @@
 import java.io.File;
 import java.io.IOException;
 
-import static gitlet.Utils.join;
+import static Utilities.Utils.join;
 
-// TODO: any imports you need here
 
-/**
- * Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
- *
- * @author TODO
- */
 public class Repository {
     /**
      @@ -20,10 +23,38 @@ public class Repository {
