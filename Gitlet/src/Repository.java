@@ -739,7 +739,7 @@ public class Repository {
 
         String header = "<<<<<<< HEAD\n";
         String separator = "=======\n";
-        String footer = ">>>>>>>\n";
+        String footer = ">>>>>>>";
         String fileNewContent = header + currentCommitFileContent + separator + givenBranchCommitFileContent + footer;
         Utils.writeContents(cwdFile, fileNewContent);
     }

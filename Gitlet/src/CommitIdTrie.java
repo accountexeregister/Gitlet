@@ -1,10 +1,6 @@
 import Utilities.Utils;
-import org.junit.Test;
 
 import java.io.Serializable;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class CommitIdTrie implements Serializable {
     // How deep the CommitIdTrie is, starting from 0 as the top level, and the one below as 1, and so on, increasing by 1 every time the trie goes deeper
@@ -76,6 +72,7 @@ public class CommitIdTrie implements Serializable {
         }
     }
 
+    /*
     @Test
     public void testAddCommitId01() {
         String sampleCommitId = "a0da1ea5a15ab613bf9961fd86f010cf74c7ee48";
@@ -83,7 +80,6 @@ public class CommitIdTrie implements Serializable {
         commitIdTrie.addCommitId(sampleCommitId);
         assertEquals(sampleCommitId, commitIdTrie.commitIdTriesArr[10].commitId);
     }
-
     @Test
     public void testAddCommitId02() {
         String sampleCommitId1 = "a0da1ea5a15ab613bf9961fd86f010cf74c7ee48";
@@ -95,7 +91,6 @@ public class CommitIdTrie implements Serializable {
         assertEquals(sampleCommitId1, commitIdTrie.commitIdTriesArr[10].commitIdTriesArr[0].commitId);
         assertEquals(sampleCommitId2, commitIdTrie.commitIdTriesArr[10].commitIdTriesArr[7].commitId);
     }
-
     @Test
     public void testAddCommitId03() {
         String sampleCommitId1 = "a0da1ea5a15ab613bf9961fd86f010cf74c7ee48";
@@ -111,7 +106,6 @@ public class CommitIdTrie implements Serializable {
         assertEquals(sampleCommitId2, commitIdTrie.commitIdTriesArr[10].commitIdTriesArr[7].commitIdTriesArr[13].commitId);
         assertEquals(sampleCommitId3, commitIdTrie.commitIdTriesArr[10].commitIdTriesArr[7].commitIdTriesArr[12].commitId);
     }
-
     @Test
     public void testAddCommitId04() {
         String sampleCommitId1 = "a0da1ea5a15ab613bf9961fd86f010cf74c7ee48";
@@ -126,7 +120,6 @@ public class CommitIdTrie implements Serializable {
         assertEquals(sampleCommitId1, commitIdTrie.commitIdTriesArr[10].commitIdTriesArr[0].commitIdTriesArr[13].commitIdTriesArr[10].commitIdTriesArr[1].commitId);
         assertEquals(sampleCommitId2, commitIdTrie.commitIdTriesArr[10].commitIdTriesArr[0].commitIdTriesArr[13].commitIdTriesArr[10].commitIdTriesArr[2].commitId);
     }
-
     @Test
     public void testAddCommitId05() {
         String sampleCommitId1 = "a0da1ea5a15ab613bf9961fd86f010cf74c7ee48";
@@ -134,7 +127,6 @@ public class CommitIdTrie implements Serializable {
         String sampleCommitId3 = "a0da23a5a15ab613bf9961fd86f010cf74c7ee48";
         String sampleCommitId4 = "a0da2345a15ab613bf9961fd86f010cf74c7ee48";
         String sampleCommitId5 = "a0da2355a15ab613bf9961fd86f010cf74c7ee48";
-
         CommitIdTrie commitIdTrie = new CommitIdTrie();
         commitIdTrie.addCommitId(sampleCommitId1);
         commitIdTrie.addCommitId(sampleCommitId2);
@@ -153,7 +145,6 @@ public class CommitIdTrie implements Serializable {
         assertEquals(sampleCommitId4, commitIdTrie.commitIdTriesArr[10].commitIdTriesArr[0].commitIdTriesArr[13].commitIdTriesArr[10].commitIdTriesArr[2].commitIdTriesArr[3].commitIdTriesArr[4].commitId);
         assertEquals(sampleCommitId5, commitIdTrie.commitIdTriesArr[10].commitIdTriesArr[0].commitIdTriesArr[13].commitIdTriesArr[10].commitIdTriesArr[2].commitIdTriesArr[3].commitIdTriesArr[5].commitId);
     }
-
     @Test
     public void testSearchCommitId01() {
         String sampleCommitId = "a0da1ea5a15ab613bf9961fd86f010cf74c7ee48";
@@ -161,7 +152,6 @@ public class CommitIdTrie implements Serializable {
         commitIdTrie.addCommitId(sampleCommitId);
         assertEquals(sampleCommitId, commitIdTrie.searchCommitId("a0da1e"));
     }
-
     @Test
     public void testSearchCommitId02() {
         String sampleCommitId1 = "a0da1ea5a15ab613bf9961fd86f010cf74c7ee48";
@@ -169,7 +159,6 @@ public class CommitIdTrie implements Serializable {
         String sampleCommitId3 = "a0da23a5a15ab613bf9961fd86f010cf74c7ee48";
         String sampleCommitId4 = "a0da2345a15ab613bf9961fd86f010cf74c7ee48";
         String sampleCommitId5 = "a0da2355a15ab613bf9961fd86f010cf74c7ee48";
-
         CommitIdTrie commitIdTrie = new CommitIdTrie();
         commitIdTrie.addCommitId(sampleCommitId1);
         commitIdTrie.addCommitId(sampleCommitId2);
@@ -182,7 +171,6 @@ public class CommitIdTrie implements Serializable {
         assertEquals(sampleCommitId4, commitIdTrie.searchCommitId("a0da234"));
         assertEquals(sampleCommitId5, commitIdTrie.searchCommitId("a0da235"));
     }
-
     @Test
     public void testSearchCommitId03() {
         String sampleCommitId1 = "a0da1ea5a15ab613bf9961fd86f010cf74c7ee48";
@@ -192,5 +180,6 @@ public class CommitIdTrie implements Serializable {
         commitIdTrie.addCommitId(sampleCommitId2);
         assertNull(commitIdTrie.searchCommitId("a0da1"));
     }
+     */
 
 }
