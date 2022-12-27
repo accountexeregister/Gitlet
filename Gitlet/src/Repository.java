@@ -107,22 +107,22 @@ public class Repository {
         }
         System.out.println();
         Commit headCommit = getHeadCommit();
-        Commit stageCommit = headCommit.getNextStagedCommit();
+        Stage stage = getStage();
         System.out.println("=== Staged Files ===");
-        List<String> stageFileNames = new ArrayList<>(stageCommit.getStageFileNames());
+        List<String> stageFileNames = new ArrayList<>(stage.getStageFileNames());
         Collections.sort(stageFileNames);
         for (String fileName : stageFileNames) {
             System.out.println(fileName);
         }
         System.out.println();
         System.out.println("=== Removed Files ===");
-        List<String> stageForRemovalFileNames = new ArrayList<>(stageCommit.getStageForRemovalFileNames());
+        List<String> stageForRemovalFileNames = new ArrayList<>(stage.getStageForRemovalFileNames());
         Collections.sort(stageForRemovalFileNames);
         for (String fileName : stageForRemovalFileNames) {
             System.out.println(fileName);
         }
         System.out.println();
-        Set<String> cwdAndStageFileSet = new HashSet<>(stageCommit.getFileNames());
+        Set<String> cwdAndStageFileSet = new HashSet<>(stage.getStageForRemovalFileNames());
         String[] cwdFileList = CWD.list();
         Collections.addAll(cwdAndStageFileSet, cwdFileList);
         List<String> cwdAndStageFileList = new ArrayList<>(cwdAndStageFileSet);
@@ -133,10 +133,10 @@ public class Repository {
                 continue;
             }
             if (Utils.join(CWD, fileName).exists()) {
-                if (stageCommit.isTracked(fileName) && isNotStagedAfterModified(headCommit, fileName)) {
+                if (stage.getStagedForAdditionFileSHA1(fileName) != null && isNotStagedAfterModified(headCommit, stage, fileName)) {
                     System.out.println(fileName + " (modified)");
                 }
-            } else if (isNotStagedAfterRemoved(headCommit, fileName)) {
+            } else if (isNotStagedAfterRemoved(headCommit, stage, fileName)) {
                 System.out.println(fileName + " (deleted)");
             }
         }
@@ -146,25 +146,24 @@ public class Repository {
             if (fileName.equals(".gitlet")) {
                 continue;
             }
-            if (Utils.join(CWD, fileName).exists() && !(stageCommit.isTracked(fileName))) {
+            if (Utils.join(CWD, fileName).exists() && !headCommit.isTracked(fileName) && !stage.isStagedForAddition(fileName)) {
                 System.out.println(fileName);
             }
         }
         System.out.println();
     }
 
-    private static boolean isNotStagedAfterModified(Commit currentCommit, String fileName) {
+    private static boolean isNotStagedAfterModified(Commit currentCommit, Stage stage, String fileName) {
         String cwdFileSHA1 = Utils.sha1(Utils.readContentsAsString(Utils.join(CWD, fileName)));
-        String stagedCommitFileSHA1 = currentCommit.getNextStagedCommit().getFileSHA1(fileName);
-        return !(cwdFileSHA1.equals(stagedCommitFileSHA1));
+        return stage.isStageable(currentCommit, fileName, cwdFileSHA1);
     }
 
-    private static boolean isNotStagedAfterRemoved(Commit currentCommit, String fileName) {
-        if (currentCommit.isStagedForRemoval(fileName)) {
+    private static boolean isNotStagedAfterRemoved(Commit currentCommit, Stage stage, String fileName) {
+        if (stage.isStagedForRemoval(fileName) != null && stage.isStagedForRemoval(fileName)) {
             return false;
         }
-        String stagedCommitFileSHA1 = currentCommit.getNextStagedCommit().getFileSHA1(fileName);
-        return (stagedCommitFileSHA1 != null && !(Utils.join(CWD, fileName).exists())) || (currentCommit.getNextStagedCommit().isTracked(fileName) && !(Utils.join(CWD, fileName).exists()));
+        String stagedCommitFileSHA1 = stage.getStagedForAdditionFileSHA1(fileName);
+        return (stagedCommitFileSHA1 != null && !(Utils.join(CWD, fileName).exists())) || (currentCommit.isTracked(fileName) && !(Utils.join(CWD, fileName).exists()));
     }
 
     private static boolean isHead(File branchFile) {

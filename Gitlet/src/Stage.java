@@ -33,7 +33,7 @@ public class Stage implements Serializable {
         return stageFileToSha1.get(fileName) != null;
     }
 
-    public boolean isStagedForRemoval(String fileName) {
+    public Boolean isStagedForRemoval(String fileName) {
         return stageRemoveFileToSha1.get(fileName);
     }
 
@@ -48,7 +48,8 @@ public class Stage implements Serializable {
     }
 
     public boolean isStageable(Commit headCommit, String fileName, String fileToAddSHA1) {
-        return stageFileToSha1.get(fileName) == null || !(stageFileToSha1.get(fileName).equals(fileToAddSHA1));
+        return (stageFileToSha1.get(fileName) == null && !(headCommit.getFileSHA1(fileName).equals(fileToAddSHA1))) ||
+                (stageFileToSha1.get(fileName) != null && !(stageFileToSha1.get(fileName).equals(fileToAddSHA1)));
     }
 
     public Set<String> getStageFileNames() {
