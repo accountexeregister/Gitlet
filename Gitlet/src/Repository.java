@@ -128,7 +128,7 @@ public class Repository {
                 continue;
             }
             if (Utils.join(CWD, fileName).exists()) {
-                if (headCommit.isTracked(fileName) && isNotStagedAfterModified(headCommit, fileName)) {
+                if (stageCommit.isTracked(fileName) && isNotStagedAfterModified(headCommit, fileName)) {
                     System.out.println(fileName + " (modified)");
                 }
             } else if (isNotStagedAfterRemoved(headCommit, fileName)) {
@@ -141,7 +141,7 @@ public class Repository {
             if (fileName.equals(".gitlet")) {
                 continue;
             }
-            if (Utils.join(CWD, fileName).exists() && !(headCommit.isTracked(fileName))) {
+            if (Utils.join(CWD, fileName).exists() && !(stageCommit.isTracked(fileName))) {
                 System.out.println(fileName);
             }
         }
@@ -421,7 +421,7 @@ public class Repository {
             if (file.getName().equals(".gitlet")) {
                 continue;
             }
-            if (!headCommit.fileExists(file.getName()) && !branchCommit.fileExists(file.getName())) {
+            if (!headCommit.isTracked(file.getName()) && !branchCommit.fileExists(file.getName())) {
                 System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
             } else if (!branchCommit.fileExists(file.getName())) {

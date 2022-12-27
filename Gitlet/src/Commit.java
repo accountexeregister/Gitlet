@@ -53,7 +53,7 @@ public class Commit implements Serializable {
     }
 
     public boolean isTracked(String fileName) {
-        return getNextStagedCommit().fileToSHA1.get(fileName) != null;
+        return fileToSHA1.get(fileName) != null;
     }
 
     public void stageForRemoval(String fileName) {
