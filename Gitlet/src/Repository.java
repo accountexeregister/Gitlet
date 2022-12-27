@@ -54,7 +54,6 @@ public class Repository {
     public static void add(String fileName) {
         Commit headCommit = getHeadCommit();
         headCommit.stageFile(fileName);
-        writeCommit(headCommit.getNextStagedCommit(), headCommit.getNextStagedCommit().toStatusSHA1(), STAGE);
     }
 
     public static void commit(String message) {
@@ -117,10 +116,14 @@ public class Repository {
     private static File getHeadBranchFile() {
         String headBranchName = Utils.readContentsAsString(HEAD);
         return Utils.join(REFS_HEADS, headBranchName + ".txt");
-
     }
 
-    private static void writeCommit(Commit commit, String sha1, File startingDirectory) {
+    private static String getHeadCommitSHA1() {
+        String headBranchName = Utils.readContentsAsString(HEAD);
+        return Utils.readContentsAsString(Utils.join(REFS_HEADS, headBranchName + ".txt"));
+    }
+
+    public static void writeCommit(Commit commit, String sha1, File startingDirectory) {
         File commitFile = createAndGetDirectoryAndFile(sha1, startingDirectory);
         Utils.writeObject(commitFile, commit);
     }
@@ -157,6 +160,15 @@ public class Repository {
         Utils.writeContents(blobFile, Utils.readContentsAsString(Utils.join(CWD, fileName)));
     }
 
+    private static String getBlobContents(Commit commit, String fileName) {
+        return Utils.readContentsAsString(getBlobFile(commit, fileName));
+    }
+
+    private static File getBlobFile(Commit commit, String fileName) {
+        String fileSHA1 = commit.getFileSHA1(fileName);
+        return createAndGetDirectoryAndFile(fileSHA1, OBJECTS);
+    }
+
 
     private static void createCommitDirectory(Commit commit, File startingDirectory) {
         String commitSHA1 = commit.toSHA1();
@@ -191,9 +203,13 @@ public class Repository {
         }
     }
 
-    /*
-    private static String commitToSHA1(Commit commit) {
-        return Utils.sha1(commit.toString());
+    public static void checkout(String commitId, String fileName) {
+        Commit checkedOutCommit = getCommit(commitId, OBJECTS);
+        File currentFileInRepo = Utils.join(CWD, fileName);
+        Utils.writeContents(currentFileInRepo, getBlobContents(checkedOutCommit, fileName));
     }
-     */
+
+    public static void checkoutHead(String fileName) {
+        checkout(getHeadCommitSHA1(), fileName);
+    }
 }

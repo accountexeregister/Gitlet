@@ -102,6 +102,7 @@ public class Commit implements Serializable {
                 nextStagedCommitObj.fileToSHA1.put(fileName, originalSha1OfFile);
             }
         }
+        Repository.writeCommit(nextStagedCommitObj, nextStagedCommitObj.toStatusSHA1(), Repository.STAGE);
     }
 
     // Sets the stage for the commit which is in staging mode (Must only be called for commit about to be commited next
@@ -110,6 +111,10 @@ public class Commit implements Serializable {
             fileList.add(fileName);
             fileToSHA1.put(fileName, parent.fileToSHA1.get(fileName));
         }
+    }
+
+    public File getFile(String fileName) {
+        return new File(getFileSHA1(fileName));
     }
 
 
