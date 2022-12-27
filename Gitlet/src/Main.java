@@ -7,8 +7,12 @@ public class Main {
                 break;
             case "add":
                 break;
+            case "log":
+                Repository.log();
+                break;
             case "delete":
                 Repository.deleteFiles();
+                break;
         }
     }
 }
