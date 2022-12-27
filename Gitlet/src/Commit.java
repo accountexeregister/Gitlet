@@ -16,23 +16,25 @@ public class Commit implements Serializable {
     // List of files stored by the commit
     private List<String> fileList = new ArrayList<>();
 
+    // Creates the initial commit by creating initial commit message, setting date to epoch time and setting its parent to null
     public Commit(String message) {
         this.message = message;
-        // date = Calendar.getInstance();
-    }
-
-    // Creates the initial commit by creating initial commit message, setting date to epoch time and setting its parent to null
-    public Commit() {
-        this.message = "initial commit";
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
-        cal.setTimeInMillis(0);
         date = cal.getTime();
         parent = null;
     }
 
     public void setNext(Commit nextCommitStaged) {
-        this.nextStagedCommit = nextCommitStaged.toSHA1();
+        this.nextStagedCommit = nextCommitStaged.toStatusSHA1();
+    }
+
+    public List<String> getFileList() {
+        return fileList;
+    }
+
+    public String getFileSHA1(String fileName) {
+        return fileToSHA1.get(fileName);
     }
 
     public String getNextStagedCommitString() {
@@ -45,7 +47,12 @@ public class Commit implements Serializable {
 
     // Factory method to create initial commit by calling private constructor Commit()
     public static Commit createInitCommit() {
-        return new Commit();
+        Commit commit = new Commit("initial commit");
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
+        cal.setTimeInMillis(0);
+        commit.date = cal.getTime();
+        return commit;
     }
 
     public String getDate() {
@@ -62,7 +69,11 @@ public class Commit implements Serializable {
     }
 
     public String toSHA1() {
-        return Utils.sha1(this.toString());
+        return Utils.sha1(this.date.toString() + this.message + this.fileList + this.fileToSHA1 + this.parent);
+    }
+
+    public String toStatusSHA1() {
+        return parent;
     }
 
     public Commit getNextStagedCommit() {

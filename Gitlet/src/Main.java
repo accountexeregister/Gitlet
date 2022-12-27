@@ -6,6 +6,11 @@ public class Main {
                 Repository.initGitlet();
                 break;
             case "add":
+                if (args.length < 2) {
+                    return;
+                }
+                String fileName = args[1];
+                Repository.add(fileName);
                 break;
             case "log":
                 Repository.log();
