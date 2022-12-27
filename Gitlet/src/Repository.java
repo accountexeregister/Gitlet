@@ -307,7 +307,7 @@ public class Repository {
         Commit currentCommit = headCommit;
         while (currentCommit != null) {
             printCommitData(currentCommit);
-            currentCommit = getCommit(currentCommit.getParent(), OBJECTS);
+            currentCommit = getCommit(currentCommit.getFirstParent(), OBJECTS);
         }
     }
 

@@ -8,13 +8,30 @@ public class Commit implements Serializable {
 
     private String message;
     private Date date;
-    private String parent;
-    private String next;
+    private List<String> parents = new ArrayList<>();
+    // Represents number of parents this commit has
+    private int p = 0;
+    private List<String> nextCommits = new ArrayList<>();
+    // Represents the number of next commits this commit has
+    private int n = 0;
     // Maps file name to its SHA1
     private Map<String, String> fileToSHA1 = new HashMap<>();
 
     public void setNext(Commit next) {
-        this.next = next.toSHA1();
+        nextCommits.add(next.toSHA1());
+        n++;
+    }
+
+    public int getNumOfParents() {
+        return p;
+    }
+
+    public int getNumOfNextCommits() {
+        return n;
+    }
+
+    public boolean hasMultipleNexts() {
+        return (n > 1);
     }
 
     public void addFilesFromStage(Commit parentCommit, Stage stage) {
@@ -46,11 +63,11 @@ public class Commit implements Serializable {
     }
 
     public void setParent(Commit parent) {
-        this.parent = parent.toSHA1();
+        parents.add(parent.toSHA1());
+        p++;
     }
 
     public Commit() {
-        parent = null;
     }
 
     public void addCommitDetail(String message) {
@@ -92,12 +109,19 @@ public class Commit implements Serializable {
         return message;
     }
 
-    public String getParent() {
-        return this.parent;
+    public String getFirstParent() {
+        if (p == 0) {
+            return null;
+        }
+        return parents.get(0);
     }
 
     public String toSHA1() {
-        return Utils.sha1(this.date.toString() + this.message + this.fileToSHA1 + this.parent);
+        String parentsCommitIds = "";
+        for (String parentCommitId : parents) {
+            parentsCommitIds += parentCommitId;
+        }
+        return Utils.sha1(this.date.toString() + this.message + this.fileToSHA1 + parentsCommitIds);
     }
 
     public Set<String> getFileNames() {
