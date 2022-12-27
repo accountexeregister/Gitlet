@@ -267,6 +267,9 @@ public class Repository {
         }
         Commit headCommit = getHeadCommit();
         for (String fileName : CWD.list()) {
+            if (fileName.equals(".gitlet")) {
+                continue;
+            }
             if (!headCommit.isTracked((fileName)) && !commitToResetTo.fileExists(fileName)) {
                 System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
@@ -278,7 +281,8 @@ public class Repository {
         for (String fileName : commitToResetTo.getFileNames()) {
             Repository.checkout(commitId, fileName);
         }
-        headCommit.resetStage();
+        Stage stage = getStage();
+        stage.resetStage();
         Utils.writeContents(getHeadBranchFile(), commitId);
 
     }

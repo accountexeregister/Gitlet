@@ -79,6 +79,13 @@ public class Main {
             case "global-log":
                 Repository.globalLog();
                 break;
+            case "reset":
+                if (args.length < 2) {
+                    return;
+                }
+                String commitIdToReset = args[1];
+                Repository.reset(commitIdToReset);
+                break;
         }
     }
 }
