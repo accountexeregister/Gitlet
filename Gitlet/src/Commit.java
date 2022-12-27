@@ -90,7 +90,7 @@ public class Commit implements Serializable {
     }
 
     public boolean isStageable(Stage stage, String fileName, String fileToAddSHA1) {
-        return stage.getStagedForAdditionFileSHA1(fileName) == null || !(stage.getStagedForAdditionFileSHA1(fileName).equals(fileToAddSHA1));
+        return this.fileToSHA1.get(fileName) == null || this.fileToSHA1.get(fileName) != null && stage.getStagedForRemovalFileSHA1(fileName) != null || !(fileToSHA1.get(fileName).equals(fileToAddSHA1)) && stage.getStagedForAdditionFileSHA1(fileName) == null || stage.getStagedForAdditionFileSHA1(fileName) != null && !(stage.getStagedForAdditionFileSHA1(fileName).equals(fileToAddSHA1));
     }
 
     public boolean fileExists(String fileName) {
@@ -166,7 +166,7 @@ public class Commit implements Serializable {
     public List<String> getParents() {
         return parents;
     }
-    
+
     @Override
     public int hashCode() {
         return this.toSHA1().hashCode();

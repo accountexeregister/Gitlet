@@ -15,13 +15,17 @@ public class Stage implements Serializable {
         File fileToAdd = Utils.join(Repository.CWD, fileName);
         String fileToAddSHA1 = Utils.sha1(Utils.readContentsAsString(fileToAdd));
         if (headCommit.isStageable(this, fileName, fileToAddSHA1)) {
-            stageFileToSha1.put(fileName, fileToAddSHA1);
-            stageRemoveFileToSha1.remove(fileName);
+            if (stageRemoveFileToSha1.get(fileName) != null) {
+                stageRemoveFileToSha1.remove(fileName);
+            } else {
+                stageFileToSha1.put(fileName, fileToAddSHA1);
+            }
         } else {
             stageFileToSha1.remove(fileName);
         }
         saveStage();
     }
+
 
     public void resetStage() {
         stageFileToSha1 = new HashMap<String, String>();
