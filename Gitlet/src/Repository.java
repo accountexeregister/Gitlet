@@ -241,8 +241,8 @@ public class Repository {
             }
             Commit nextCommit = new Commit();
             nextCommit.setParent(headCommit);
-            headCommit.setNext(nextCommit);
             nextCommit.addCommitDetail(message);
+            headCommit.setNext(nextCommit);
             nextCommit.addFilesFromStage(headCommit, stage);
             headCommit = nextCommit;
             createBlobs(headCommit);
