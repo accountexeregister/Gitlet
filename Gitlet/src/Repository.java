@@ -52,6 +52,39 @@ public class Repository {
         commit("initial commit");
     }
 
+    private static String getBranchName(String fileName) {
+        return fileName.substring(0, fileName.length() - 4);
+    }
+
+    public static void status() {
+        System.out.println("=== Branches ===");
+        for (File branchFile : REFS_HEADS.listFiles()) {
+            if (isHead(branchFile)) {
+                System.out.print("*");
+            }
+            System.out.println(getBranchName(branchFile.getName()));
+        }
+        System.out.println();
+        Commit headCommit = getHeadCommit();
+        Commit stagingCommit = headCommit.getNextStagedCommit();
+        System.out.println("=== Staged Files ===");
+        for (String fileName : stagingCommit.getFileNames()) {
+            if (fileName == null) {
+                continue;
+            }
+            if (!(stagingCommit.getFileSHA1(fileName).equals(headCommit.getFileSHA1(fileName)))) {
+                System.out.println(fileName);
+            }
+        }
+        System.out.println();
+        System.out.println("=== Removed Files ===");
+
+    }
+
+    private static boolean isHead(File branchFile) {
+        return Utils.readContentsAsString(getHeadBranchFile()).equals(Utils.readContentsAsString(branchFile));
+    }
+    
     public static void find(String message) {
         if (!find(message, COMMITS)) {
             System.out.println("Found no commit with that message.");
@@ -78,7 +111,7 @@ public class Repository {
         }
         return atLeastOneCommitWithMessage;
     }
-    
+
     public static void add(String fileName) {
         File file = Utils.join(CWD, fileName);
         if (!file.exists()) {

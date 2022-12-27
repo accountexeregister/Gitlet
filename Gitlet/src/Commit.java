@@ -13,10 +13,12 @@ public class Commit implements Serializable {
     private String nextStagedCommit;
     // Maps file name to its SHA1
     private Map<String, String> fileToSHA1 = new HashMap<>();
+    private Map<String, Boolean> stageFileToSha1 = new HashMap<>();
+    private Map<String, Boolean> stageRemoveFileToSha1 = new HashMap<>();
     /*
-    // List of files stored by the commit
-    private List<String> fileList = new ArrayList<>();
-     */
+        // List of files stored by the commit
+        private List<String> fileList = new ArrayList<>();
+    */
     // Checks if a file has been staged on this commit
     private boolean stageExists = false;
 
@@ -52,6 +54,8 @@ public class Commit implements Serializable {
     public void stageForRemoval(String fileName) {
         Commit nextStagedCommit = getNextStagedCommit();
         nextStagedCommit.fileToSHA1.put(fileName, null);
+        nextStagedCommit.stageFileToSha1.remove(fileName);
+        nextStagedCommit.stageRemoveFileToSha1.put(fileName, true);
         stageExists = true;
         Repository.writeCommit(nextStagedCommit, nextStagedCommit.toStatusSHA1(), Repository.STAGE);
         Repository.writeCommit(this, toSHA1(), Repository.OBJECTS);
@@ -93,9 +97,12 @@ public class Commit implements Serializable {
         String fileToAddSHA1 = Utils.sha1(Utils.readContentsAsString(fileToAdd));
         if (isStageable(fileName, fileToAddSHA1)) {
             nextStagedCommitObj.fileToSHA1.put(fileName, fileToAddSHA1);
+            nextStagedCommitObj.stageFileToSha1.put(fileName, true);
+            nextStagedCommitObj.stageRemoveFileToSha1.remove(fileName);
             stageExists = true;
         } else {
             nextStagedCommitObj.fileToSHA1.put(fileName, null);
+            nextStagedCommitObj.stageFileToSha1.remove(fileName);
             stageExists = false;
         }
         Repository.writeCommit(nextStagedCommitObj, nextStagedCommitObj.toStatusSHA1(), Repository.STAGE);
