@@ -22,6 +22,7 @@ public class GitletBreadthFirstPaths {
         marked = new boolean[G.vertices()];
         edgeTo = new int[G.vertices()];
         distTo = new int[G.vertices()];
+        distTo[s] = 0;
         Queue<Integer> fringe = new ArrayDeque<Integer>();
         fringe.add(s);
         marked[s] = true;

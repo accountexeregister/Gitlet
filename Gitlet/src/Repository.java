@@ -603,18 +603,21 @@ public class Repository {
 
     public static Commit getSplitPoint(Commit currentCommit, Commit givenCommit) {
         Commit initialCommit = Utils.readObject(INITIAL_COMMIT, Commit.class);
-        GitletGraph graph = createGraph(initialCommit);
+        GitletGraph graph = createGraph(currentCommit, givenCommit);
         GitletBreadthFirstPaths currentCommitBFS = new GitletBreadthFirstPaths(graph, currentCommit);
         GitletBreadthFirstPaths givenCommitBFS = new GitletBreadthFirstPaths(graph, givenCommit);
         SplitPointClass splitPointStruct = new SplitPointClass();
-        return getSplitPointBFS(splitPointStruct, currentCommit, givenCommit, initialCommit, currentCommitBFS, givenCommitBFS, 0, 0).getCurrentCommit();
+        return getSplitPointBFS(graph, splitPointStruct, currentCommit, givenCommit, initialCommit, currentCommitBFS, givenCommitBFS, 0, 0).getCurrentCommit();
     }
 
 
-    private static SplitPointClass getSplitPointBFS(SplitPointClass splitPointStruct, Commit currentBranchCommit, Commit givenBranchCommit, Commit currentCommit,
+    private static SplitPointClass getSplitPointBFS(GitletGraph G, SplitPointClass splitPointStruct, Commit currentBranchCommit, Commit givenBranchCommit, Commit currentCommit,
                                                     GitletBreadthFirstPaths currentBranchBFS, GitletBreadthFirstPaths givenBranchBFS,
                                                     int currentBranchShortestPath, int givenBranchShortestPath) {
 
+        if (!G.containsKey(currentCommit)) {
+            return splitPointStruct;
+        }
         int currentBranchPath = currentBranchBFS.distanceTo(currentCommit);
         int givenBranchPath = givenBranchBFS.distanceTo(currentCommit);
 
@@ -635,24 +638,36 @@ public class Repository {
 
         for (String nextCommitId : currentCommit.getNextCommits()) {
             Commit nextCommit = getCommit(nextCommitId, OBJECTS);
-            splitPointStruct = getSplitPointBFS(splitPointStruct, currentBranchCommit, givenBranchCommit, nextCommit,
+            splitPointStruct = getSplitPointBFS(G, splitPointStruct, currentBranchCommit, givenBranchCommit, nextCommit,
                     currentBranchBFS, givenBranchBFS, splitPointStruct.getCurrentBranchShortestPath(), splitPointStruct.getGivenBranchShortestPath());
         }
 
         return splitPointStruct;
     }
 
-    private static GitletGraph createGraph(Commit initialCommit) {
+    private static GitletGraph createGraph(Commit currentCommit, Commit givenCommit) {
         GitletGraph graph = new GitletGraph();
-        addEdges(initialCommit, graph);
+        addEdges(currentCommit, graph);
+        if (!graph.containsKey(givenCommit)) {
+            addEdges(givenCommit, graph);
+        }
         return graph;
     }
 
-    private static void addEdges(Commit currentCommit, GitletGraph graph) {
-        for (String nextCommitId : currentCommit.getNextCommits()) {
-            Commit nextCommit = getCommit(nextCommitId, OBJECTS);
-            graph.addEdge(currentCommit, nextCommit);
-            addEdges(nextCommit, graph);
+    private static void addEdges(Commit commit, GitletGraph graph) {
+
+        if (commit.getNumOfParents() == 0) {
+            return;
+        }
+
+        for (String parentCommitId : commit.getParents()) {
+            Commit parentCommit = getCommit(parentCommitId, OBJECTS);
+            if (!graph.containsKey(parentCommit)) {
+                graph.addEdge(commit, parentCommit);
+                addEdges(parentCommit, graph);
+            } else {
+                graph.addEdge(commit, parentCommit);
+            }
         }
     }
 }
