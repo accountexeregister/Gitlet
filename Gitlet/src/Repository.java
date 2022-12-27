@@ -75,14 +75,6 @@ public class Repository {
     }
 
     public static void deleteFiles() {
-        File text1 = Utils.join(CWD, "text1.txt");
-        File text2 = Utils.join(CWD, "text2.txt");
-        try {
-            text1.createNewFile();
-            text2.createNewFile();
-        } catch (IOException e) {
-            System.exit(0);
-        }
         deleteFile(CWD);
     }
 
@@ -93,11 +85,11 @@ public class Repository {
                 deleteFile(subFile);
             }
         }
-        if (!file.equals(CWD)) {
+        if (!file.equals(GITLET_DIR) && !file.equals(CWD)) {
             file.delete();
         }
     }
-    
+
     @Test
     public void convertCommitToSHA1() {
         Commit commit = new Commit("test");
