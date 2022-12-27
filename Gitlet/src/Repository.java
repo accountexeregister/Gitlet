@@ -1,4 +1,5 @@
 import Utilities.Utils;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -244,10 +245,13 @@ public class Repository {
             Commit nextCommit = new Commit();
             nextCommit.setParent(headCommit);
             nextCommit.addCommitDetail(message);
-            headCommit.setNext(nextCommit);
             nextCommit.addFilesFromStage(headCommit, stage);
+            headCommit.setNext(nextCommit);
             writeCommit(headCommit, headCommit.toSHA1(), OBJECTS);
             writeCommit(headCommit, headCommit.toSHA1(), COMMITS);
+            if (headCommit.getFirstParent() == null) {
+                Utils.writeObject(INITIAL_COMMIT, headCommit);
+            }
             headCommit = nextCommit;
             createBlobs(headCommit);
             stage.resetStage();
@@ -514,14 +518,90 @@ public class Repository {
         checkout(getHeadCommitSHA1(), fileName);
     }
 
+    @Test
+    public void testSplitPoint() {
+        Commit initCommit = Commit.createInitCommit();
+        Commit commit1 = new Commit();
+        commit1.setParent(initCommit);
+        commit1.addCommitDetail("1");
+        initCommit.setNext(commit1);
+        Commit commit2 = new Commit();
+        commit2.setParent(commit1);
+        commit2.addCommitDetail("2");
+        commit1.setNext(commit2);
+
+
+        Commit commit4 = new Commit();
+        commit4.setParent(initCommit);
+        commit4.addCommitDetail("4");
+        initCommit.setNext(commit4);
+        Commit commit5 = new Commit();
+        commit5.setParent(commit4);
+        commit5.setParent(commit1);
+        commit5.addCommitDetail("5");
+        commit1.setNext(commit5);
+        commit4.setNext(commit5);
+        Commit commit6 = new Commit();
+        commit6.setParent(commit5);
+        commit6.addCommitDetail("6");
+        commit5.setNext(commit6);
+
+        Commit commit3 = new Commit();
+        commit3.setParent(commit2);
+        commit3.setParent(commit5);
+        commit3.addCommitDetail("3");
+        commit2.setNext(commit3);
+        commit5.setNext(commit3);
+
+        Commit commit7 = new Commit();
+        commit7.setParent(commit3);
+        commit7.addCommitDetail("7");
+        commit3.setNext(commit7);
+
+        Commit commit8 = new Commit();
+        commit8.setParent(commit7);
+        commit8.addCommitDetail("8");
+        commit7.setNext(commit8);
+
+        Commit commit9 = new Commit();
+        commit9.setParent(commit7);
+        commit9.addCommitDetail("9");
+        commit7.setNext(commit9);
+
+        Commit commit10 = new Commit();
+        commit10.setParent(commit6);
+        commit10.setParent(commit3);
+        commit10.addCommitDetail("10");
+        commit6.setNext(commit10);
+        commit3.setNext(commit10);
+
+
+        initGitlet();
+        writeCommit(initCommit, initCommit.toSHA1(), OBJECTS);
+        writeCommit(commit1, commit1.toSHA1(), OBJECTS);
+        writeCommit(commit2, commit2.toSHA1(), OBJECTS);
+        writeCommit(commit3, commit3.toSHA1(), OBJECTS);
+        writeCommit(commit4, commit4.toSHA1(), OBJECTS);
+        writeCommit(commit5, commit5.toSHA1(), OBJECTS);
+        writeCommit(commit6, commit6.toSHA1(), OBJECTS);
+        writeCommit(commit7, commit7.toSHA1(), OBJECTS);
+        writeCommit(commit8, commit8.toSHA1(), OBJECTS);
+        writeCommit(commit9, commit9.toSHA1(), OBJECTS);
+        writeCommit(commit10, commit10.toSHA1(), OBJECTS);
+
+
+        Utils.writeObject(INITIAL_COMMIT, initCommit);
+        System.out.println(getSplitPoint(commit4, commit2).getMessage());
+    }
+
     public static void getSplitPointMessage(String branchName) {
         String branchCommitId = getBranchCommitID(branchName + ".txt");
         Commit branchCommit = getCommit(branchCommitId, OBJECTS);
         Commit headCommit = getHeadCommit();
-        System.out.println(getSplitPointNewTest(headCommit, branchCommit).getMessage());
+        System.out.println(getSplitPoint(headCommit, branchCommit).getMessage());
     }
 
-    public static Commit getSplitPointNewTest(Commit currentCommit, Commit givenCommit) {
+    public static Commit getSplitPoint(Commit currentCommit, Commit givenCommit) {
         Commit initialCommit = Utils.readObject(INITIAL_COMMIT, Commit.class);
         GitletGraph graph = createGraph(initialCommit);
         GitletBreadthFirstPaths currentCommitBFS = new GitletBreadthFirstPaths(graph, currentCommit);
@@ -575,48 +655,4 @@ public class Repository {
             addEdges(nextCommit, graph);
         }
     }
-
-
-    private static Commit getSplitPoint(Commit currentCommit, Commit givenCommit) {
-        if (currentCommit == null || givenCommit == null) {
-            return null;
-        }
-        if (currentCommit.equals(givenCommit)) {
-            return currentCommit;
-        }
-
-        Commit currentCommitParentWithBranches = getCommit(currentCommit.getFirstParent(), OBJECTS);
-        Commit givenCommitParentWithBranches = getCommit(givenCommit.getFirstParent(), OBJECTS);
-
-        while (currentCommitParentWithBranches != null && !currentCommitParentWithBranches.hasMultipleNexts()) {
-            if (currentCommitParentWithBranches.equals(givenCommit)) {
-                return givenCommit;
-            }
-            currentCommitParentWithBranches = getCommit(currentCommitParentWithBranches.getFirstParent(), OBJECTS);
-        }
-
-        while (givenCommitParentWithBranches != null && !givenCommitParentWithBranches.hasMultipleNexts()) {
-            if (givenCommitParentWithBranches.equals(currentCommit)) {
-                return givenCommit;
-            }
-            givenCommitParentWithBranches = getCommit(givenCommitParentWithBranches.getFirstParent(), OBJECTS);
-        }
-
-        Commit a = getSplitPoint(currentCommitParentWithBranches, givenCommit);
-        Commit b = getSplitPoint(currentCommit, givenCommitParentWithBranches);
-
-        if (a != null && b != null) {
-            if (a.getBranchNumber() > b.getBranchNumber()) {
-                return a;
-            }
-            return b;
-        }
-
-        if (a == null) {
-            return b;
-        }
-
-        return a;
-    }
-
 }
