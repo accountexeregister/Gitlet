@@ -594,6 +594,41 @@ public class Repository {
         System.out.println(getSplitPoint(commit4, commit2).getMessage());
     }
 
+    public static void merge(String givenBranchName) {
+        String givenBranchCommitId = getBranchCommitID(givenBranchName + ".txt");
+        Commit givenBranchCommit = getCommit(givenBranchCommitId, OBJECTS);
+        Commit headCommit = getHeadCommit();
+        Commit splitPoint = getSplitPoint(headCommit, givenBranchCommit);
+        if (givenBranchCommit.equals(splitPoint)) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+            return;
+        }
+
+        if (headCommit.equals(splitPoint)) {
+            checkoutBranch(givenBranchName);
+            System.out.println("Current branch fast-forwarded.");
+            return;
+        }
+
+        for (String fileName : splitPoint.getFileNames()) {
+            if (isModifiedFromSplitPoint(givenBranchCommit, splitPoint, fileName) && !isModifiedFromSplitPoint(headCommit, splitPoint, fileName)) {
+                checkout(givenBranchCommitId, fileName);
+                add(fileName);
+            }
+        }
+
+        String currentBranch = getBranchName(getHeadBranchFile().getName());
+        String commitMessage = "Merged " + givenBranchName + " into " + currentBranch + ".";
+
+
+    }
+
+    private static boolean isModifiedFromSplitPoint(Commit commit, Commit splitPoint, String splitPointFileName) {
+        String commitFileSHA1 = commit.getFileSHA1(splitPointFileName);
+        String splitPointFileSHA1 = splitPoint.getFileSHA1(splitPointFileName);
+        return !commitFileSHA1.equals(splitPointFileSHA1);
+    }
+
     public static void getSplitPointMessage(String branchName) {
         String branchCommitId = getBranchCommitID(branchName + ".txt");
         Commit branchCommit = getCommit(branchCommitId, OBJECTS);
