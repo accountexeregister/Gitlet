@@ -442,6 +442,8 @@ public class Repository {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
+        Stage stage = getStage();
+        stage.resetStage();
     }
 
     public static void checkoutBranch(String branchName) {
@@ -494,7 +496,8 @@ public class Repository {
         for (File fileToDelete : filesToDelete) {
             fileToDelete.delete();
         }
-        headCommit.resetStage();
+        Stage stage = getStage();
+        stage.resetStage();
         Utils.writeContents(HEAD, branchName);
     }
 
