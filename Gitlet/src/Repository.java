@@ -605,13 +605,40 @@ public class Repository {
     }
      */
 
+    private static void printErrorUntrackedFile(Commit headCommit, String fileName) {
+        if (!headCommit.isTracked(fileName)) {
+            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.exit(0);
+        }
+    }
+
     public static void merge(String givenBranchName) {
-        String givenBranchCommitId = getBranchCommitID(givenBranchName + ".txt");
-        Commit givenBranchCommit = getCommit(givenBranchCommitId, OBJECTS);
+        Stage stage = getStage();
         Commit headCommit = getHeadCommit();
-        Commit splitPoint = getSplitPoint(headCommit, givenBranchCommit);
+        if (stage.isStageExists(headCommit)) {
+            System.out.println("You have uncommitted changes.");
+            System.exit(0);
+        }
+
+        File givenBranchFile = Utils.join(REFS_HEADS, givenBranchName + ".txt");
+        if (!givenBranchFile.exists()) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+
         String currentBranch = getHeadBranchFile().getName();
         String currentBranchName = getBranchName(currentBranch);
+
+        if (currentBranchName.equals(givenBranchName)) {
+            System.out.println("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+
+        String givenBranchCommitId = getBranchCommitID(givenBranchName + ".txt");
+        Commit givenBranchCommit = getCommit(givenBranchCommitId, OBJECTS);
+
+        Commit splitPoint = getSplitPoint(headCommit, givenBranchCommit);
+
         if (givenBranchCommit.equals(splitPoint)) {
             System.out.println("Given branch is an ancestor of the current branch.");
             return;
@@ -624,22 +651,119 @@ public class Repository {
             return;
         }
 
-        for (String fileName : splitPoint.getFileNames()) {
-            if (isModifiedFromSplitPoint(givenBranchCommit, splitPoint, fileName) && !isModifiedFromSplitPoint(headCommit, splitPoint, fileName)) {
-                checkout(givenBranchCommitId, fileName);
+        Set<String> splitCurrentAndGivenBranchFileNames = new HashSet<>(headCommit.getFileNames());
+        splitCurrentAndGivenBranchFileNames.addAll(givenBranchCommit.getFileNames());
+        splitCurrentAndGivenBranchFileNames.addAll(splitPoint.getFileNames());
+        for (String file : CWD.list()) {
+            if (!splitCurrentAndGivenBranchFileNames.contains(file)) {
+                splitCurrentAndGivenBranchFileNames.add(file);
+            }
+        }
+        boolean hasCommit = false;
+
+        for (String fileName : splitCurrentAndGivenBranchFileNames) {
+            if (isInConflict(headCommit, givenBranchCommit, splitPoint, fileName)) {
+                printErrorUntrackedFile(headCommit, fileName);
+                hasCommit = true;
+                writeConflictInFile(headCommit, givenBranchCommit, fileName);
                 add(fileName);
+            } else {
+                if (splitPoint.fileExists(fileName)) {
+                    if (isModifiedFromSplitPoint(givenBranchCommit, splitPoint, fileName) && !isModifiedFromSplitPoint(headCommit, splitPoint, fileName)) {
+                        printErrorUntrackedFile(headCommit, fileName);
+                        checkout(givenBranchCommitId, fileName);
+                        add(fileName);
+                    } else if (!isModifiedFromSplitPoint(headCommit, splitPoint, fileName) && !givenBranchCommit.fileExists(fileName)) {
+                        printErrorUntrackedFile(headCommit, fileName);
+                        rm(fileName);
+                    }
+                } else if (givenBranchCommit.fileExists(fileName) && !headCommit.fileExists(fileName)) {
+                    printErrorUntrackedFile(headCommit, fileName);
+                    checkout(givenBranchCommitId, fileName);
+                    add(fileName);
+                }
             }
         }
 
         String commitMessage = "Merged " + givenBranchName + " into " + currentBranchName + ".";
         commit(commitMessage, givenBranchCommit);
+        if (hasCommit) {
+            System.out.println("Encountered a merge conflict.");
+        }
+    }
+
+    private static void writeConflictInFile(Commit currentCommit, Commit givenBranchCommit, String fileName) {
+        File currentCommitFile = getDirectoryAndFile(currentCommit.getFileSHA1(fileName), OBJECTS);
+        File givenBranchCommitFile = getDirectoryAndFile(givenBranchCommit.getFileSHA1(fileName), OBJECTS);
+        String currentCommitFileContent;
+        String givenBranchCommitFileContent;
+        if (currentCommitFile == null) {
+            currentCommitFileContent = "";
+        } else {
+            currentCommitFileContent = Utils.readContentsAsString(currentCommitFile);
+        }
+
+        if (givenBranchCommitFile == null) {
+            givenBranchCommitFileContent = "";
+        } else {
+            givenBranchCommitFileContent = Utils.readContentsAsString(givenBranchCommitFile);
+        }
+
+        File cwdFile = Utils.join(CWD, fileName);
+        if (!cwdFile.exists()) {
+            try {
+                cwdFile.createNewFile();
+            } catch (IOException e) {
+                System.exit(0);
+            }
+        }
+
+        String header = "<<<<<<< HEAD\n";
+        String separator = "=======\n";
+        String footer = ">>>>>>>\n";
+        String fileNewContent = header + currentCommitFileContent + separator + givenBranchCommitFileContent + footer;
+        Utils.writeContents(cwdFile, fileNewContent);
+    }
+
+    private static File getDirectoryAndFile(String sha1, File startingDirectory) {
+        String firstTwoCharOfCommitID = sha1.substring(0, 2);
+        String restOfCommitID = sha1.substring(2);
+        File firstTwoCharComIdDir = Utils.join(startingDirectory, firstTwoCharOfCommitID);
+        if (!(firstTwoCharComIdDir.exists())) {
+            return null;
+        }
+        File restOfComIdFile = Utils.join(firstTwoCharComIdDir, restOfCommitID + ".txt");
+        if (!(restOfComIdFile.exists())) {
+            return null;
+        }
+        return restOfComIdFile;
+    }
+
+    private static boolean isInConflict(Commit currentCommit, Commit givenBranchCommit, Commit splitPoint, String fileName) {
+        if (!splitPoint.fileExists(fileName) && currentCommit.fileExists(fileName) && givenBranchCommit.fileExists(fileName)) {
+            return !(currentCommit.getFileSHA1(fileName).equals(givenBranchCommit.getFileSHA1(fileName)));
+        }
+
+        if (splitPoint.getFileSHA1(fileName).equals(currentCommit.getFileSHA1(fileName)) || splitPoint.getFileSHA1(fileName).equals(givenBranchCommit.getFileSHA1(fileName))) {
+            return false;
+        }
+
+        if (currentCommit.fileExists(fileName)) {
+            return !(currentCommit.getFileSHA1(fileName).equals(givenBranchCommit.getFileSHA1(fileName)));
+        }
+
+        if (givenBranchCommit.fileExists(fileName)) {
+            return !(givenBranchCommit.getFileSHA1(fileName).equals(currentCommit.getFileSHA1(fileName)));
+        }
+
+        return false;
 
 
     }
 
-    private static boolean isModifiedFromSplitPoint(Commit commit, Commit splitPoint, String splitPointFileName) {
-        String commitFileSHA1 = commit.getFileSHA1(splitPointFileName);
-        String splitPointFileSHA1 = splitPoint.getFileSHA1(splitPointFileName);
+    private static boolean isModifiedFromSplitPoint(Commit commit, Commit splitPoint, String fileName) {
+        String commitFileSHA1 = commit.getFileSHA1(fileName);
+        String splitPointFileSHA1 = splitPoint.getFileSHA1(fileName);
         return !commitFileSHA1.equals(splitPointFileSHA1);
     }
 
