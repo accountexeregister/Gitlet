@@ -735,7 +735,7 @@ public class Repository {
         String givenBranchCommitFileContent;
         String currentCommitFileSHA1 = currentCommit.getFileSHA1(fileName);
         if (currentCommitFileSHA1 == null) {
-            currentCommitFileContent = "\n";
+            currentCommitFileContent = "";
         } else {
             File currentCommitFile = getDirectoryAndFile(currentCommit.getFileSHA1(fileName), OBJECTS);
             currentCommitFileContent = Utils.readContentsAsString(currentCommitFile);
@@ -743,7 +743,7 @@ public class Repository {
 
         String givenBranchCommitFileSHA1 = givenBranchCommit.getFileSHA1(fileName);
         if (givenBranchCommitFileSHA1 == null) {
-            givenBranchCommitFileContent = "\n";
+            givenBranchCommitFileContent = "";
         } else {
             File givenBranchCommitFile = getDirectoryAndFile(givenBranchCommit.getFileSHA1(fileName), OBJECTS);
             givenBranchCommitFileContent = Utils.readContentsAsString(givenBranchCommitFile);
