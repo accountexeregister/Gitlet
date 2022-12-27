@@ -21,6 +21,7 @@ public class Stage implements Serializable {
         } else {
             stageFileToSha1.remove(fileName);
         }
+        saveStage();
     }
 
     public boolean isStagedForAddition(String fileName) {
@@ -33,10 +34,12 @@ public class Stage implements Serializable {
 
     public void unstage(String fileName) {
         stageFileToSha1.remove(fileName);
+        saveStage();
     }
 
     public void stageForRemoval(String fileName) {
         stageRemoveFileToSha1.put(fileName, null);
+        saveStage();
     }
 
     public boolean isStageable(Commit headCommit, String fileName, String fileToAddSHA1) {
