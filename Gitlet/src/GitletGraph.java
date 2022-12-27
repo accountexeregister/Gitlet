@@ -54,4 +54,30 @@ public class GitletGraph {
     public List<Integer> adj(int v) {
         return graphMap.get(v);
     }
+
+    public static GitletGraph createGraph(Commit currentCommit, Commit givenCommit) {
+        GitletGraph graph = new GitletGraph();
+        addEdges(currentCommit, graph);
+        if (!graph.containsKey(givenCommit)) {
+            addEdges(givenCommit, graph);
+        }
+        return graph;
+    }
+
+    private static void addEdges(Commit commit, GitletGraph graph) {
+
+        if (commit.getNumOfParents() == 0) {
+            return;
+        }
+
+        for (String parentCommitId : commit.getParents()) {
+            Commit parentCommit = Repository.getCommit(parentCommitId, Repository.OBJECTS);
+            if (!graph.containsKey(parentCommit)) {
+                graph.addEdge(commit, parentCommit);
+                addEdges(parentCommit, graph);
+            } else {
+                graph.addEdge(commit, parentCommit);
+            }
+        }
+    }
 }

@@ -36,7 +36,6 @@ public class Repository {
         }
         GITLET_DIR.mkdir();
         STAGEDIR.mkdir();
-        // Commit initCommit = Commit.createInitCommit();
         REFS.mkdir();
         REFS_HEADS.mkdir();
         OBJECTS.mkdir();
@@ -136,11 +135,7 @@ public class Repository {
         Collections.sort(cwdAndStageFileList);
         System.out.println("=== Modifications Not Staged For Commit ===");
         for (String fileName : cwdAndStageFileList) {
-            if (fileName.equals(".gitlet")) {
-                continue;
-            }
-
-            if (fileName.equals("gitlet")) {
+            if (Utils.join(CWD, fileName).isDirectory()) {
                 continue;
             }
             if (Utils.join(CWD, fileName).exists()) {
@@ -154,10 +149,7 @@ public class Repository {
         System.out.println();
         System.out.println("=== Untracked Files ===");
         for (String fileName : cwdAndStageFileList) {
-            if (fileName.equals(".gitlet")) {
-                continue;
-            }
-            if (fileName.equals("gitlet")) {
+            if (Utils.join(CWD, fileName).isDirectory()) {
                 continue;
             }
             if (Utils.join(CWD, fileName).exists()) {
@@ -319,10 +311,7 @@ public class Repository {
         }
         Commit headCommit = getHeadCommit();
         for (File file : CWD.listFiles()) {
-            if (file.getName().equals(".gitlet")) {
-                continue;
-            }
-            if (file.getName().equals("gitlet")) {
+            if (file.isDirectory()) {
                 continue;
             }
             if (untrckedAndWillBeOverwritten(headCommit, commitToResetTo, stage, file)) {
@@ -508,8 +497,6 @@ public class Repository {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
-        // Stage stage = getStage();
-        // stage.resetStage();
     }
 
     private static boolean untrckedAndWillBeOverwritten(Commit headCommit, Commit commitToSwitchTo, Stage stage, File currentFile) {
@@ -542,10 +529,7 @@ public class Repository {
         List<File> filesToDelete = new ArrayList<>();
         Commit headCommit = getHeadCommit();
         for (File file : Utils.join(CWD).listFiles()) {
-            if (file.getName().equals(".gitlet")) {
-                continue;
-            }
-            if (file.getName().equals("gitlet")) {
+            if (file.isDirectory()) {
                 continue;
             }
             if (untrckedAndWillBeOverwritten(headCommit, branchCommit, stage, file)) {
@@ -586,73 +570,6 @@ public class Repository {
         checkout(getHeadCommitSHA1(), fileName);
     }
 
-    /*
-    @Test
-    public void testSplitPoint() {
-        Commit initCommit = Commit.createInitCommit();
-        Commit commit1 = new Commit();
-        commit1.setParent(initCommit);
-        commit1.addCommitDetail("1");
-        initCommit.setNext(commit1);
-        Commit commit2 = new Commit();
-        commit2.setParent(commit1);
-        commit2.addCommitDetail("2");
-        commit1.setNext(commit2);
-        Commit commit4 = new Commit();
-        commit4.setParent(initCommit);
-        commit4.addCommitDetail("4");
-        initCommit.setNext(commit4);
-        Commit commit5 = new Commit();
-        commit5.setParent(commit4);
-        commit5.setParent(commit1);
-        commit5.addCommitDetail("5");
-        commit1.setNext(commit5);
-        commit4.setNext(commit5);
-        Commit commit6 = new Commit();
-        commit6.setParent(commit5);
-        commit6.addCommitDetail("6");
-        commit5.setNext(commit6);
-        Commit commit3 = new Commit();
-        commit3.setParent(commit2);
-        commit3.setParent(commit5);
-        commit3.addCommitDetail("3");
-        commit2.setNext(commit3);
-        commit5.setNext(commit3);
-        Commit commit7 = new Commit();
-        commit7.setParent(commit3);
-        commit7.addCommitDetail("7");
-        commit3.setNext(commit7);
-        Commit commit8 = new Commit();
-        commit8.setParent(commit7);
-        commit8.addCommitDetail("8");
-        commit7.setNext(commit8);
-        Commit commit9 = new Commit();
-        commit9.setParent(commit7);
-        commit9.addCommitDetail("9");
-        commit7.setNext(commit9);
-        Commit commit10 = new Commit();
-        commit10.setParent(commit6);
-        commit10.setParent(commit3);
-        commit10.addCommitDetail("10");
-        commit6.setNext(commit10);
-        commit3.setNext(commit10);
-        initGitlet();
-        writeCommit(initCommit, initCommit.toSHA1(), OBJECTS);
-        writeCommit(commit1, commit1.toSHA1(), OBJECTS);
-        writeCommit(commit2, commit2.toSHA1(), OBJECTS);
-        writeCommit(commit3, commit3.toSHA1(), OBJECTS);
-        writeCommit(commit4, commit4.toSHA1(), OBJECTS);
-        writeCommit(commit5, commit5.toSHA1(), OBJECTS);
-        writeCommit(commit6, commit6.toSHA1(), OBJECTS);
-        writeCommit(commit7, commit7.toSHA1(), OBJECTS);
-        writeCommit(commit8, commit8.toSHA1(), OBJECTS);
-        writeCommit(commit9, commit9.toSHA1(), OBJECTS);
-        writeCommit(commit10, commit10.toSHA1(), OBJECTS);
-        Utils.writeObject(INITIAL_COMMIT, initCommit);
-        System.out.println(getSplitPoint(commit4, commit2).getMessage());
-    }
-     */
-
     private static void printErrorUntrackedFile(Commit headCommit, String fileName) {
         if (Utils.join(CWD, fileName).exists() && !headCommit.isTracked(fileName)) {
             System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
@@ -685,7 +602,7 @@ public class Repository {
         String givenBranchCommitId = getBranchCommitID(givenBranchName + ".txt");
         Commit givenBranchCommit = getCommit(givenBranchCommitId, OBJECTS);
 
-        Commit splitPoint = getSplitPoint(headCommit, givenBranchCommit);
+        Commit splitPoint = Commit.getSplitPoint(headCommit, givenBranchCommit);
 
         if (givenBranchCommit.equals(splitPoint)) {
             System.out.println("Given branch is an ancestor of the current branch.");
@@ -710,11 +627,7 @@ public class Repository {
         boolean hasCommit = false;
 
         for (String fileName : splitCurrentAndGivenBranchFileNames) {
-            if (fileName.equals(".gitlet")) {
-                continue;
-            }
-
-            if (fileName.equals("gitlet")) {
+            if (Utils.join(CWD, fileName).isDirectory()) {
                 continue;
             }
             if (isInConflict(headCommit, givenBranchCommit, splitPoint, fileName)) {
@@ -842,76 +755,73 @@ public class Repository {
         String branchCommitId = getBranchCommitID(branchName + ".txt");
         Commit branchCommit = getCommit(branchCommitId, OBJECTS);
         Commit headCommit = getHeadCommit();
-        System.out.println(getSplitPoint(headCommit, branchCommit).getMessage());
+        System.out.println(Commit.getSplitPoint(headCommit, branchCommit).getMessage());
     }
 
-    public static Commit getSplitPoint(Commit currentCommit, Commit givenCommit) {
-        Commit initialCommit = Utils.readObject(INITIAL_COMMIT, Commit.class);
-        GitletGraph graph = createGraph(currentCommit, givenCommit);
-        GitletBreadthFirstPaths currentCommitBFS = new GitletBreadthFirstPaths(graph, currentCommit);
-        GitletBreadthFirstPaths givenCommitBFS = new GitletBreadthFirstPaths(graph, givenCommit);
-        SplitPointClass splitPointStruct = new SplitPointClass();
-        return getSplitPointBFS(graph, splitPointStruct, currentCommit, givenCommit, initialCommit, currentCommitBFS, givenCommitBFS, 0, 0).getCurrentCommit();
+    /*
+    @Test
+    public void testSplitPoint() {
+        Commit initCommit = Commit.createInitCommit();
+        Commit commit1 = new Commit();
+        commit1.setParent(initCommit);
+        commit1.addCommitDetail("1");
+        initCommit.setNext(commit1);
+        Commit commit2 = new Commit();
+        commit2.setParent(commit1);
+        commit2.addCommitDetail("2");
+        commit1.setNext(commit2);
+        Commit commit4 = new Commit();
+        commit4.setParent(initCommit);
+        commit4.addCommitDetail("4");
+        initCommit.setNext(commit4);
+        Commit commit5 = new Commit();
+        commit5.setParent(commit4);
+        commit5.setParent(commit1);
+        commit5.addCommitDetail("5");
+        commit1.setNext(commit5);
+        commit4.setNext(commit5);
+        Commit commit6 = new Commit();
+        commit6.setParent(commit5);
+        commit6.addCommitDetail("6");
+        commit5.setNext(commit6);
+        Commit commit3 = new Commit();
+        commit3.setParent(commit2);
+        commit3.setParent(commit5);
+        commit3.addCommitDetail("3");
+        commit2.setNext(commit3);
+        commit5.setNext(commit3);
+        Commit commit7 = new Commit();
+        commit7.setParent(commit3);
+        commit7.addCommitDetail("7");
+        commit3.setNext(commit7);
+        Commit commit8 = new Commit();
+        commit8.setParent(commit7);
+        commit8.addCommitDetail("8");
+        commit7.setNext(commit8);
+        Commit commit9 = new Commit();
+        commit9.setParent(commit7);
+        commit9.addCommitDetail("9");
+        commit7.setNext(commit9);
+        Commit commit10 = new Commit();
+        commit10.setParent(commit6);
+        commit10.setParent(commit3);
+        commit10.addCommitDetail("10");
+        commit6.setNext(commit10);
+        commit3.setNext(commit10);
+        initGitlet();
+        writeCommit(initCommit, initCommit.toSHA1(), OBJECTS);
+        writeCommit(commit1, commit1.toSHA1(), OBJECTS);
+        writeCommit(commit2, commit2.toSHA1(), OBJECTS);
+        writeCommit(commit3, commit3.toSHA1(), OBJECTS);
+        writeCommit(commit4, commit4.toSHA1(), OBJECTS);
+        writeCommit(commit5, commit5.toSHA1(), OBJECTS);
+        writeCommit(commit6, commit6.toSHA1(), OBJECTS);
+        writeCommit(commit7, commit7.toSHA1(), OBJECTS);
+        writeCommit(commit8, commit8.toSHA1(), OBJECTS);
+        writeCommit(commit9, commit9.toSHA1(), OBJECTS);
+        writeCommit(commit10, commit10.toSHA1(), OBJECTS);
+        Utils.writeObject(INITIAL_COMMIT, initCommit);
+        System.out.println(Commit.getSplitPoint(commit4, commit2).getMessage());
     }
-
-
-    private static SplitPointClass getSplitPointBFS(GitletGraph G, SplitPointClass splitPointStruct, Commit currentBranchCommit, Commit givenBranchCommit, Commit currentCommit,
-                                                    GitletBreadthFirstPaths currentBranchBFS, GitletBreadthFirstPaths givenBranchBFS,
-                                                    int currentBranchShortestPath, int givenBranchShortestPath) {
-
-        if (!G.containsKey(currentCommit)) {
-            return splitPointStruct;
-        }
-        int currentBranchPath = currentBranchBFS.distanceTo(currentCommit);
-        int givenBranchPath = givenBranchBFS.distanceTo(currentCommit);
-
-        if (currentCommit.getFirstParent() != null) {
-            if (currentBranchPath > currentBranchShortestPath) {
-                return splitPointStruct;
-            }
-
-            if (givenBranchPath > givenBranchShortestPath) {
-                return splitPointStruct;
-            }
-        }
-
-        splitPointStruct.setCurrentBranchShortestPath(currentBranchPath);
-        splitPointStruct.setGivenBranchShortestPath(givenBranchPath);
-
-        splitPointStruct.setCurrentCommit(currentCommit);
-
-        for (String nextCommitId : currentCommit.getNextCommits()) {
-            Commit nextCommit = getCommit(nextCommitId, OBJECTS);
-            splitPointStruct = getSplitPointBFS(G, splitPointStruct, currentBranchCommit, givenBranchCommit, nextCommit,
-                    currentBranchBFS, givenBranchBFS, splitPointStruct.getCurrentBranchShortestPath(), splitPointStruct.getGivenBranchShortestPath());
-        }
-
-        return splitPointStruct;
-    }
-
-    private static GitletGraph createGraph(Commit currentCommit, Commit givenCommit) {
-        GitletGraph graph = new GitletGraph();
-        addEdges(currentCommit, graph);
-        if (!graph.containsKey(givenCommit)) {
-            addEdges(givenCommit, graph);
-        }
-        return graph;
-    }
-
-    private static void addEdges(Commit commit, GitletGraph graph) {
-
-        if (commit.getNumOfParents() == 0) {
-            return;
-        }
-
-        for (String parentCommitId : commit.getParents()) {
-            Commit parentCommit = getCommit(parentCommitId, OBJECTS);
-            if (!graph.containsKey(parentCommit)) {
-                graph.addEdge(commit, parentCommit);
-                addEdges(parentCommit, graph);
-            } else {
-                graph.addEdge(commit, parentCommit);
-            }
-        }
-    }
+     */
 }

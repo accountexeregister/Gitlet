@@ -57,6 +57,8 @@ public class Commit implements Serializable {
     public void setParent(Commit parent) {
         parents.add(parent.toSHA1());
         p++;
+
+
     }
 
     public Commit() {
@@ -85,7 +87,6 @@ public class Commit implements Serializable {
     public static Commit createInitCommit() {
         Commit commit = new Commit();
         commit.message = "initial commit";
-        commit.branchNumber = 0;
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
         cal.setTimeInMillis(0);
@@ -150,5 +151,48 @@ public class Commit implements Serializable {
     @Override
     public int hashCode() {
         return this.toSHA1().hashCode();
+    }
+
+    public static Commit getSplitPoint(Commit currentCommit, Commit givenCommit) {
+        Commit initialCommit = Utils.readObject(Repository.INITIAL_COMMIT, Commit.class);
+        GitletGraph graph = GitletGraph.createGraph(currentCommit, givenCommit);
+        GitletBreadthFirstPaths currentCommitBFS = new GitletBreadthFirstPaths(graph, currentCommit);
+        GitletBreadthFirstPaths givenCommitBFS = new GitletBreadthFirstPaths(graph, givenCommit);
+        SplitPointClass splitPointStruct = new SplitPointClass();
+        return getSplitPointBFS(graph, splitPointStruct, initialCommit, currentCommitBFS, givenCommitBFS, 0, 0).getCurrentCommit();
+    }
+
+    private static SplitPointClass getSplitPointBFS(GitletGraph G, SplitPointClass splitPointStruct, Commit currentCommit,
+                                                    GitletBreadthFirstPaths currentBranchBFS, GitletBreadthFirstPaths givenBranchBFS,
+                                                    int currentBranchShortestPath, int givenBranchShortestPath) {
+
+        if (!G.containsKey(currentCommit)) {
+            return splitPointStruct;
+        }
+        int currentBranchPath = currentBranchBFS.distanceTo(currentCommit);
+        int givenBranchPath = givenBranchBFS.distanceTo(currentCommit);
+
+        if (currentCommit.getFirstParent() != null) {
+            if (currentBranchPath > currentBranchShortestPath) {
+                return splitPointStruct;
+            }
+
+            if (givenBranchPath > givenBranchShortestPath) {
+                return splitPointStruct;
+            }
+        }
+
+        splitPointStruct.setCurrentBranchShortestPath(currentBranchPath);
+        splitPointStruct.setGivenBranchShortestPath(givenBranchPath);
+
+        splitPointStruct.setCurrentCommit(currentCommit);
+
+        for (String nextCommitId : currentCommit.getNextCommits()) {
+            Commit nextCommit = Repository.getCommit(nextCommitId, Repository.OBJECTS);
+            splitPointStruct = getSplitPointBFS(G, splitPointStruct, nextCommit,
+                    currentBranchBFS, givenBranchBFS, splitPointStruct.getCurrentBranchShortestPath(), splitPointStruct.getGivenBranchShortestPath());
+        }
+
+        return splitPointStruct;
     }
 }
