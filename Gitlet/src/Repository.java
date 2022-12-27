@@ -241,6 +241,32 @@ public class Repository {
         Utils.writeContents(headBranchFile, headCommit.toSHA1());
     }
 
+    public static void reset(String commitId) {
+        Commit commitToResetTo = null;
+        try {
+            commitToResetTo = getCommit(commitId, OBJECTS);
+        } catch (NullPointerException e) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
+        Commit headCommit = getHeadCommit();
+        for (String fileName : CWD.list()) {
+            if (!headCommit.isTracked((fileName)) && !commitToResetTo.fileExists(fileName)) {
+                System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
+            if (headCommit.isTracked(fileName) && !commitToResetTo.fileExists(fileName)) {
+                Repository.rm(fileName);
+            }
+        }
+        for (String fileName : commitToResetTo.getFileNames()) {
+            Repository.checkout(commitId, fileName);
+        }
+        headCommit.resetStage();
+        Utils.writeContents(getHeadBranchFile(), commitId);
+
+    }
+
     public static void globalLog() {
         logFile(COMMITS);
     }
