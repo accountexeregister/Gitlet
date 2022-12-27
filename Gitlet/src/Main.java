@@ -53,6 +53,9 @@ public class Main {
                 String messageToFind = args[1];
                 Repository.find(messageToFind);
                 break;
+            case "status":
+                Repository.status();
+                break;
         }
     }
 }

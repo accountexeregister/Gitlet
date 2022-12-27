@@ -41,20 +41,25 @@ public class Commit implements Serializable {
         return !(fileToSHA1.get(fileName).equals(getNextStagedCommit().fileToSHA1.get(fileName)));
     }
 
+    public boolean isStagedForRemoval(String fileName) {
+        return stageRemoveFileToSha1.get(fileName) != null;
+    }
+
     public void unstage(String fileName) {
         Commit nextStagedCommit = getNextStagedCommit();
         nextStagedCommit.fileToSHA1.put(fileName, fileToSHA1.get(fileName));
+        nextStagedCommit.stageFileToSha1.remove(fileName);
         Repository.writeCommit(nextStagedCommit, nextStagedCommit.toStatusSHA1(), Repository.STAGE);
     }
 
     public boolean isTracked(String fileName) {
-        return fileToSHA1.get(fileName) != null;
+        return getNextStagedCommit().fileToSHA1.get(fileName) != null;
     }
 
     public void stageForRemoval(String fileName) {
         Commit nextStagedCommit = getNextStagedCommit();
         nextStagedCommit.fileToSHA1.put(fileName, null);
-        nextStagedCommit.stageFileToSha1.remove(fileName);
+        // nextStagedCommit.stageFileToSha1.remove(fileName);
         nextStagedCommit.stageRemoveFileToSha1.put(fileName, true);
         stageExists = true;
         Repository.writeCommit(nextStagedCommit, nextStagedCommit.toStatusSHA1(), Repository.STAGE);
@@ -168,5 +173,13 @@ public class Commit implements Serializable {
 
     public Set<String> getFileNames() {
         return fileToSHA1.keySet();
+    }
+
+    public Set<String> getStageFileNames() {
+        return stageFileToSha1.keySet();
+    }
+
+    public Set<String> getStageForRemovalFileNames() {
+        return stageRemoveFileToSha1.keySet();
     }
 }

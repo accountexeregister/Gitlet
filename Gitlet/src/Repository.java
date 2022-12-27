@@ -2,6 +2,7 @@ import Utilities.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
 
 import static Utilities.Utils.join;
 
@@ -57,8 +58,12 @@ public class Repository {
     }
 
     public static void status() {
+        FileComparator fileComparator = new FileComparator();
         System.out.println("=== Branches ===");
-        for (File branchFile : REFS_HEADS.listFiles()) {
+        List<File> refHeadsFiles = new ArrayList<>();
+        Collections.addAll(refHeadsFiles, REFS_HEADS.listFiles());
+        Collections.sort(refHeadsFiles, fileComparator);
+        for (File branchFile : refHeadsFiles) {
             if (isHead(branchFile)) {
                 System.out.print("*");
             }
@@ -66,25 +71,70 @@ public class Repository {
         }
         System.out.println();
         Commit headCommit = getHeadCommit();
-        Commit stagingCommit = headCommit.getNextStagedCommit();
+        Commit stageCommit = headCommit.getNextStagedCommit();
         System.out.println("=== Staged Files ===");
-        for (String fileName : stagingCommit.getFileNames()) {
-            if (fileName == null) {
+        List<String> stageFileNames = new ArrayList<>(stageCommit.getStageFileNames());
+        Collections.sort(stageFileNames);
+        for (String fileName : stageFileNames) {
+            System.out.println(fileName);
+        }
+        System.out.println();
+        System.out.println("=== Removed Files ===");
+        List<String> stageForRemovalFileNames = new ArrayList<>(stageCommit.getStageForRemovalFileNames());
+        Collections.sort(stageForRemovalFileNames);
+        for (String fileName : stageForRemovalFileNames) {
+            System.out.println(fileName);
+        }
+        System.out.println();
+        Set<String> cwdAndStageFileSet = new HashSet<>(stageCommit.getFileNames());
+        String[] cwdFileList = CWD.list();
+        Collections.addAll(cwdAndStageFileSet, cwdFileList);
+        List<String> cwdAndStageFileList = new ArrayList<>(cwdAndStageFileSet);
+        Collections.sort(cwdAndStageFileList);
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        for (String fileName : cwdAndStageFileList) {
+            if (fileName.equals(".gitlet")) {
                 continue;
             }
-            if (!(stagingCommit.getFileSHA1(fileName).equals(headCommit.getFileSHA1(fileName)))) {
+            if (Utils.join(CWD, fileName).exists()) {
+                if (headCommit.isTracked(fileName) && isNotStagedAfterModified(headCommit, fileName)) {
+                    System.out.println(fileName + " (modified)");
+                }
+            } else if (isNotStagedAfterRemoved(headCommit, fileName)) {
+                System.out.println(fileName + " (deleted)");
+            }
+        }
+        System.out.println();
+        System.out.println("=== Untracked Files ===");
+        for (String fileName : cwdAndStageFileList) {
+            if (fileName.equals(".gitlet")) {
+                continue;
+            }
+            if (Utils.join(CWD, fileName).exists() && !(headCommit.isTracked(fileName))) {
                 System.out.println(fileName);
             }
         }
         System.out.println();
-        System.out.println("=== Removed Files ===");
+    }
 
+    private static boolean isNotStagedAfterModified(Commit currentCommit, String fileName) {
+        String cwdFileSHA1 = Utils.sha1(Utils.readContentsAsString(Utils.join(CWD, fileName)));
+        String stagedCommitFileSHA1 = currentCommit.getNextStagedCommit().getFileSHA1(fileName);
+        return !(cwdFileSHA1.equals(stagedCommitFileSHA1));
+    }
+
+    private static boolean isNotStagedAfterRemoved(Commit currentCommit, String fileName) {
+        if (currentCommit.isStagedForRemoval(fileName)) {
+            return false;
+        }
+        String stagedCommitFileSHA1 = currentCommit.getNextStagedCommit().getFileSHA1(fileName);
+        return (stagedCommitFileSHA1 != null && !(Utils.join(CWD, fileName).exists())) || (currentCommit.isTracked(fileName) && !(Utils.join(CWD, fileName).exists()));
     }
 
     private static boolean isHead(File branchFile) {
         return Utils.readContentsAsString(getHeadBranchFile()).equals(Utils.readContentsAsString(branchFile));
     }
-    
+
     public static void find(String message) {
         if (!find(message, COMMITS)) {
             System.out.println("Found no commit with that message.");
