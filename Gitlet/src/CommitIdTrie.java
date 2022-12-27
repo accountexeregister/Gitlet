@@ -1,4 +1,8 @@
-public class CommitIdTrie {
+import Utilities.Utils;
+
+import java.io.Serializable;
+
+public class CommitIdTrie implements Serializable {
     // How deep the CommitIdTrie is, starting from 0 as the top level, and the one below as 1, and so on, increasing by 1 every time the trie goes deeper
     private int depth;
     // Name of the full commit id
@@ -42,5 +46,9 @@ public class CommitIdTrie {
         }
 
         return searchCommitId(commitId, commitIdTriesArr[commitIdCharHexadecimal]);
+    }
+
+    public void saveTrie() {
+        Utils.writeObject(Repository.COMMIT_ID_TRIE, this);
     }
 }
