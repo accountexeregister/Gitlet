@@ -158,4 +158,9 @@ public class Commit implements Serializable {
         Commit oCommit = (Commit) o;
         return this.toSHA1().equals(oCommit.toSHA1());
     }
+
+    @Override
+    public int hashCode() {
+        return this.toSHA1().hashCode();
+    }
 }
