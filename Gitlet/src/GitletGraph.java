@@ -14,6 +14,14 @@ public class GitletGraph {
         n = 0;
     }
 
+    public int getCommitKeyInGraph(Commit c) {
+        return commitKeyInGraph.get(c);
+    }
+
+    public int vertices() {
+        return n;
+    }
+    
     public void addEdge(Commit v, Commit w) {
         if (!commitKeyInGraph.containsKey(v)) {
             commitKeyInGraph.put(v, n++);
