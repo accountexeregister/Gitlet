@@ -1,5 +1,4 @@
 import Utilities.Utils;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -539,6 +538,7 @@ public class Repository {
         checkout(getHeadCommitSHA1(), fileName);
     }
 
+    /*
     @Test
     public void testSplitPoint() {
         Commit initCommit = Commit.createInitCommit();
@@ -550,8 +550,6 @@ public class Repository {
         commit2.setParent(commit1);
         commit2.addCommitDetail("2");
         commit1.setNext(commit2);
-
-
         Commit commit4 = new Commit();
         commit4.setParent(initCommit);
         commit4.addCommitDetail("4");
@@ -566,37 +564,30 @@ public class Repository {
         commit6.setParent(commit5);
         commit6.addCommitDetail("6");
         commit5.setNext(commit6);
-
         Commit commit3 = new Commit();
         commit3.setParent(commit2);
         commit3.setParent(commit5);
         commit3.addCommitDetail("3");
         commit2.setNext(commit3);
         commit5.setNext(commit3);
-
         Commit commit7 = new Commit();
         commit7.setParent(commit3);
         commit7.addCommitDetail("7");
         commit3.setNext(commit7);
-
         Commit commit8 = new Commit();
         commit8.setParent(commit7);
         commit8.addCommitDetail("8");
         commit7.setNext(commit8);
-
         Commit commit9 = new Commit();
         commit9.setParent(commit7);
         commit9.addCommitDetail("9");
         commit7.setNext(commit9);
-
         Commit commit10 = new Commit();
         commit10.setParent(commit6);
         commit10.setParent(commit3);
         commit10.addCommitDetail("10");
         commit6.setNext(commit10);
         commit3.setNext(commit10);
-
-
         initGitlet();
         writeCommit(initCommit, initCommit.toSHA1(), OBJECTS);
         writeCommit(commit1, commit1.toSHA1(), OBJECTS);
@@ -609,17 +600,18 @@ public class Repository {
         writeCommit(commit8, commit8.toSHA1(), OBJECTS);
         writeCommit(commit9, commit9.toSHA1(), OBJECTS);
         writeCommit(commit10, commit10.toSHA1(), OBJECTS);
-
-
         Utils.writeObject(INITIAL_COMMIT, initCommit);
         System.out.println(getSplitPoint(commit4, commit2).getMessage());
     }
+     */
 
     public static void merge(String givenBranchName) {
         String givenBranchCommitId = getBranchCommitID(givenBranchName + ".txt");
         Commit givenBranchCommit = getCommit(givenBranchCommitId, OBJECTS);
         Commit headCommit = getHeadCommit();
         Commit splitPoint = getSplitPoint(headCommit, givenBranchCommit);
+        String currentBranch = getHeadBranchFile().getName();
+        String currentBranchName = getBranchName(currentBranch);
         if (givenBranchCommit.equals(splitPoint)) {
             System.out.println("Given branch is an ancestor of the current branch.");
             return;
@@ -627,6 +619,7 @@ public class Repository {
 
         if (headCommit.equals(splitPoint)) {
             checkoutBranch(givenBranchName);
+            Utils.writeContents(Utils.join(REFS_HEADS, currentBranch), givenBranchCommitId);
             System.out.println("Current branch fast-forwarded.");
             return;
         }
@@ -638,8 +631,7 @@ public class Repository {
             }
         }
 
-        String currentBranch = getBranchName(getHeadBranchFile().getName());
-        String commitMessage = "Merged " + givenBranchName + " into " + currentBranch + ".";
+        String commitMessage = "Merged " + givenBranchName + " into " + currentBranchName + ".";
         commit(commitMessage, givenBranchCommit);
 
 
