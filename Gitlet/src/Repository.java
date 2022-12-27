@@ -74,6 +74,20 @@ public class Repository {
         Utils.writeContents(branchFile, headCommitSHA1);
     }
 
+    public static void rmBranch(String branchName) {
+        String branchFileName = branchName + ".txt";
+        File branchFile = Utils.join(REFS_HEADS, branchFileName);
+        if (!branchFile.exists()) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        if (isHead(branchFile)) {
+            System.out.println("Cannot remove the current branch.");
+        }
+        branchFile.delete();
+
+    }
+
     public static void status() {
         FileComparator fileComparator = new FileComparator();
         System.out.println("=== Branches ===");

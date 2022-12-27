@@ -63,6 +63,13 @@ public class Main {
                 String branchName = args[1];
                 Repository.branch(branchName);
                 break;
+            case "rm-branch":
+                if (args.length < 2) {
+                    return;
+                }
+                String branchNameDel = args[1];
+                Repository.rmBranch(branchNameDel);
+                break;
         }
     }
 }
