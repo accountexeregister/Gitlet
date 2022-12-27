@@ -52,6 +52,33 @@ public class Repository {
         commit("initial commit");
     }
 
+    public static void find(String message) {
+        if (!find(message, COMMITS)) {
+            System.out.println("Found no commit with that message.");
+            System.exit(0);
+        }
+    }
+
+    // Finds the commit with given message, printing its id if found and returning true
+    // If commit with given message is not found, returns false
+    private static boolean find(String message, File currentFile) {
+        if (currentFile.isFile()) {
+            Commit commit = Utils.readObject(currentFile, Commit.class);
+            if (commit.getMessage().equals(message)) {
+                System.out.println(commit.toSHA1());
+                return true;
+            }
+            return false;
+        }
+        boolean atLeastOneCommitWithMessage = false;
+        for (File subFile : currentFile.listFiles()) {
+            if (find(message, subFile)) {
+                atLeastOneCommitWithMessage = true;
+            }
+        }
+        return atLeastOneCommitWithMessage;
+    }
+    
     public static void add(String fileName) {
         File file = Utils.join(CWD, fileName);
         if (!file.exists()) {

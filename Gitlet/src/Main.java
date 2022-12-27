@@ -46,6 +46,13 @@ public class Main {
                 String fileNameToRm = args[1];
                 Repository.rm(fileNameToRm);
                 break;
+            case "find":
+                if (args.length < 2) {
+                    return;
+                }
+                String messageToFind = args[1];
+                Repository.find(messageToFind);
+                break;
         }
     }
 }
