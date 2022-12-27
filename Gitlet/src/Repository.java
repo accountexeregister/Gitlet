@@ -244,6 +244,8 @@ public class Repository {
             nextCommit.addCommitDetail(message);
             headCommit.setNext(nextCommit);
             nextCommit.addFilesFromStage(headCommit, stage);
+            writeCommit(headCommit, headCommit.toSHA1(), OBJECTS);
+            writeCommit(headCommit, headCommit.toSHA1(), COMMITS);
             headCommit = nextCommit;
             createBlobs(headCommit);
             stage.resetStage();
@@ -524,8 +526,8 @@ public class Repository {
             return currentCommit;
         }
 
-        Commit currentCommitParentWithBranches = currentCommit;
-        Commit givenCommitParentWithBranches = givenCommit;
+        Commit currentCommitParentWithBranches = getCommit(currentCommit.getFirstParent(), OBJECTS);
+        Commit givenCommitParentWithBranches = getCommit(givenCommit.getFirstParent(), OBJECTS);
 
         while (currentCommitParentWithBranches != null && !currentCommitParentWithBranches.hasMultipleNexts()) {
             if (currentCommitParentWithBranches.equals(givenCommit)) {
@@ -543,9 +545,19 @@ public class Repository {
 
         Commit a = getSplitPoint(currentCommitParentWithBranches, givenCommit);
         Commit b = getSplitPoint(currentCommit, givenCommitParentWithBranches);
-        if (a != null) {
-            return a;
+
+        if (a != null && b != null) {
+            if (a.getBranchNumber() > b.getBranchNumber()) {
+                return a;
+            }
+            return b;
         }
-        return b;
+
+        if (a == null) {
+            return b;
+        }
+
+        return a;
     }
+
 }

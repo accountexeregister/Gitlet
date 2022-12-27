@@ -16,6 +16,9 @@ public class Commit implements Serializable {
     private int n = 0;
     // Maps file name to its SHA1
     private Map<String, String> fileToSHA1 = new HashMap<>();
+    // Indicates which branch number of commit it is, the lower the number, the earlier it is
+    // For instance, if two commits have the same branchNumber, they are both the next commits of the same parent commit
+    private int branchNumber;
 
     public void setNext(Commit next) {
         nextCommits.add(next.toSHA1());
@@ -65,6 +68,15 @@ public class Commit implements Serializable {
     public void setParent(Commit parent) {
         parents.add(parent.toSHA1());
         p++;
+        // Only sets branch number for the first parent
+        if (p == 1) {
+            branchNumber = parent.branchNumber + 1;
+        }
+
+    }
+
+    public int getBranchNumber() {
+        return this.branchNumber;
     }
 
     public Commit() {
@@ -93,6 +105,7 @@ public class Commit implements Serializable {
     public static Commit createInitCommit() {
         Commit commit = new Commit();
         commit.message = "initial commit";
+        commit.branchNumber = 0;
         Calendar cal = Calendar.getInstance();
         cal.setTimeZone(TimeZone.getTimeZone("Asia/Calcutta"));
         cal.setTimeInMillis(0);
