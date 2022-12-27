@@ -300,6 +300,10 @@ public class Repository {
     public static void reset(String commitId) {
         Commit commitToResetTo = null;
         try {
+            if (commitId.length() < SHA1_LENGTH) {
+                CommitIdTrie initialCommitIdTrie = getStartingComIdTrie();
+                commitId = initialCommitIdTrie.searchCommitId(commitId);
+            }
             commitToResetTo = getCommit(commitId, OBJECTS);
         } catch (NullPointerException e) {
             System.out.println("No commit with that id exists.");
