@@ -606,7 +606,7 @@ public class Repository {
      */
 
     private static void printErrorUntrackedFile(Commit headCommit, String fileName) {
-        if (!headCommit.isTracked(fileName)) {
+        if (Utils.join(CWD, fileName).exists() && !headCommit.isTracked(fileName)) {
             System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
             System.exit(0);
         }
@@ -662,8 +662,10 @@ public class Repository {
         boolean hasCommit = false;
 
         for (String fileName : splitCurrentAndGivenBranchFileNames) {
+            if (fileName.equals(".gitlet")) {
+                continue;
+            }
             if (isInConflict(headCommit, givenBranchCommit, splitPoint, fileName)) {
-                printErrorUntrackedFile(headCommit, fileName);
                 hasCommit = true;
                 writeConflictInFile(headCommit, givenBranchCommit, fileName);
                 add(fileName);
@@ -693,19 +695,21 @@ public class Repository {
     }
 
     private static void writeConflictInFile(Commit currentCommit, Commit givenBranchCommit, String fileName) {
-        File currentCommitFile = getDirectoryAndFile(currentCommit.getFileSHA1(fileName), OBJECTS);
-        File givenBranchCommitFile = getDirectoryAndFile(givenBranchCommit.getFileSHA1(fileName), OBJECTS);
         String currentCommitFileContent;
         String givenBranchCommitFileContent;
-        if (currentCommitFile == null) {
-            currentCommitFileContent = "";
+        String currentCommitFileSHA1 = currentCommit.getFileSHA1(fileName);
+        if (currentCommitFileSHA1 == null) {
+            currentCommitFileContent = "\n";
         } else {
+            File currentCommitFile = getDirectoryAndFile(currentCommit.getFileSHA1(fileName), OBJECTS);
             currentCommitFileContent = Utils.readContentsAsString(currentCommitFile);
         }
 
-        if (givenBranchCommitFile == null) {
-            givenBranchCommitFileContent = "";
+        String givenBranchCommitFileSHA1 = givenBranchCommit.getFileSHA1(fileName);
+        if (givenBranchCommitFileSHA1 == null) {
+            givenBranchCommitFileContent = "\n";
         } else {
+            File givenBranchCommitFile = getDirectoryAndFile(givenBranchCommit.getFileSHA1(fileName), OBJECTS);
             givenBranchCommitFileContent = Utils.readContentsAsString(givenBranchCommitFile);
         }
 
@@ -725,6 +729,15 @@ public class Repository {
         Utils.writeContents(cwdFile, fileNewContent);
     }
 
+    public static void readFile(String fileName) {
+        File cwdFile = Utils.join(CWD, fileName);
+        if (!cwdFile.exists()) {
+            System.out.println("The file does not exist");
+            System.exit(0);
+        }
+        System.out.println(Utils.readContentsAsString(cwdFile));
+    }
+
     private static File getDirectoryAndFile(String sha1, File startingDirectory) {
         String firstTwoCharOfCommitID = sha1.substring(0, 2);
         String restOfCommitID = sha1.substring(2);
@@ -740,8 +753,12 @@ public class Repository {
     }
 
     private static boolean isInConflict(Commit currentCommit, Commit givenBranchCommit, Commit splitPoint, String fileName) {
-        if (!splitPoint.fileExists(fileName) && currentCommit.fileExists(fileName) && givenBranchCommit.fileExists(fileName)) {
-            return !(currentCommit.getFileSHA1(fileName).equals(givenBranchCommit.getFileSHA1(fileName)));
+        printErrorUntrackedFile(currentCommit, fileName);
+        if (!splitPoint.fileExists(fileName)) {
+            if (currentCommit.fileExists(fileName) && givenBranchCommit.fileExists(fileName)) {
+                return !(currentCommit.getFileSHA1(fileName).equals(givenBranchCommit.getFileSHA1(fileName)));
+            }
+            return false;
         }
 
         if (splitPoint.getFileSHA1(fileName).equals(currentCommit.getFileSHA1(fileName)) || splitPoint.getFileSHA1(fileName).equals(givenBranchCommit.getFileSHA1(fileName))) {

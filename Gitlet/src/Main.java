@@ -100,6 +100,13 @@ public class Main {
                 String givenBranchName = args[1];
                 Repository.merge(givenBranchName);
                 break;
+            case "readfile":
+                if (args.length < 2) {
+                    return;
+                }
+                String fileToRead = args[1];
+                Repository.readFile(fileToRead);
+                break;
         }
     }
 }
