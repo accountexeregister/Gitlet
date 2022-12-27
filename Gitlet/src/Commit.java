@@ -122,6 +122,10 @@ public class Commit implements Serializable {
         return new File(getFileSHA1(fileName));
     }
 
+    public boolean fileExists(String fileName) {
+        return getFileSHA1(fileName) != null;
+    }
+
     public void resetStage() {
         Commit nextStageCommit = new Commit();
         nextStageCommit.setParent(this);

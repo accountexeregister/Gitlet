@@ -224,9 +224,18 @@ public class Repository {
     }
 
     public static void checkout(String commitId, String fileName) {
-        Commit checkedOutCommit = getCommit(commitId, OBJECTS);
-        File currentFileInRepo = Utils.join(CWD, fileName);
-        Utils.writeContents(currentFileInRepo, getBlobContents(checkedOutCommit, fileName));
+        try {
+            Commit checkedOutCommit = getCommit(commitId, OBJECTS);
+            if (checkedOutCommit.fileExists(fileName)) {
+                System.out.println("File does not exist in that commit.");
+                System.exit(0);
+            }
+            File currentFileInRepo = Utils.join(CWD, fileName);
+            Utils.writeContents(currentFileInRepo, getBlobContents(checkedOutCommit, fileName));
+        } catch (NullPointerException e) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
     }
 
     public static void checkoutHead(String fileName) {
