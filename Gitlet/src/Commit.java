@@ -132,6 +132,7 @@ public class Commit implements Serializable {
         return stage.getStagedForAdditionFileSHA1(fileName) == null || !(stage.getStagedForAdditionFileSHA1(fileName).equals(fileToAddSHA1));
     }
 
+    /*
     public void stageFile(String fileName) {
         Commit nextStagedCommitObj = getNextStagedCommit();
         File fileToAdd = Utils.join(Repository.CWD, fileName);
@@ -149,6 +150,8 @@ public class Commit implements Serializable {
         Repository.writeCommit(nextStagedCommitObj, nextStagedCommitObj.toStatusSHA1(), Repository.STAGE);
         Repository.writeCommit(this, this.toSHA1(), Repository.OBJECTS);
     }
+    *
+     */
 
     // Sets the stage for the commit which is in staging mode (Must only be called for commit about to be commited next
     public void setStage(Commit parent) {

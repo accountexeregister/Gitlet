@@ -218,7 +218,7 @@ public class Repository {
         File headBranchFile = getHeadBranchFile();
         Stage stage = getStage();
         if (headCommit != null) {
-            if (!headCommit.isStageExists()) {
+            if (!stage.isStageExists(headCommit)) {
                 System.out.println("No changes added to the commit.");
                 System.exit(0);
             }
