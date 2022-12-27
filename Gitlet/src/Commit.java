@@ -30,6 +30,25 @@ public class Commit implements Serializable {
         return nextStagedCommit;
     }
 
+    public void addFilesFromStage(Commit parentCommit, Stage stage) {
+        for (String commitFileName : parentCommit.getFileNames()) {
+            String stageAdditionFileSHA1 = stage.getStagedForAdditionFileSHA1(commitFileName);
+            boolean stageRemovalFileSHA1 = stage.getStagedForRemovalFileSHA1(commitFileName);
+            if (stageAdditionFileSHA1 != null) {
+                fileToSHA1.put(commitFileName, stageAdditionFileSHA1);
+                stage.unstage(commitFileName);
+            } else if (stageRemovalFileSHA1) {
+                fileToSHA1.remove(commitFileName);
+            } else {
+                fileToSHA1.put(commitFileName, parentCommit.fileToSHA1.get(commitFileName));
+            }
+        }
+
+        for (String fileName : stage.getStageFileNames()) {
+            fileToSHA1.put(fileName, stage.getStagedForAdditionFileSHA1(fileName));
+        }
+    }
+
     public boolean isStageExists() {
         return stageExists;
     }
