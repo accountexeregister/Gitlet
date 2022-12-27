@@ -8,11 +8,6 @@ import static Utilities.Utils.join;
 
 public class Repository {
     /**
-     @@ -20,10 +23,38 @@ public class Repository {
-      * variable is used. We've provided two examples for you.
-     */
-
-    /**
      * The current working directory.
      */
     public static final File CWD = new File(System.getProperty("user.dir"));
@@ -27,6 +22,7 @@ public class Repository {
     public static final File HEAD = join(GITLET_DIR, "HEAD.txt");
     // Directory that stores objects such as commits
     public static final File OBJECTS = Utils.join(GITLET_DIR, "objects");
+    public static final File COMMITS = Utils.join(GITLET_DIR, "commits");
     public static final int SHA1_LENGTH = 40;
 
     public static void initGitlet() {
@@ -40,6 +36,7 @@ public class Repository {
         REFS.mkdir();
         REFS_HEADS.mkdir();
         OBJECTS.mkdir();
+        COMMITS.mkdir();
         try {
             HEAD.createNewFile();
         } catch (IOException e) {
@@ -65,6 +62,7 @@ public class Repository {
         headCommit.stageFile(fileName);
     }
 
+
     public static void commit(String message) {
         Commit headCommit = getHeadCommit();
         File headBranchFile = getHeadBranchFile();
@@ -80,6 +78,7 @@ public class Repository {
             Commit headNextStagedCommit = headCommit.getNextStagedCommit();
             headNextStagedCommit.addCommitDetail(message);
             writeCommit(headNextStagedCommit, headNextStagedCommit.toSHA1(), OBJECTS);
+            writeCommit(headNextStagedCommit, headNextStagedCommit.toSHA1(), COMMITS);
             createBlobs(headNextStagedCommit);
             // Remove stage commit sha1 and make a new one
             deleteFile(Utils.join(STAGE, headNextStagedCommit.toStatusSHA1()));
@@ -89,27 +88,48 @@ public class Repository {
             Commit initCommit = Commit.createInitCommit();
             headCommit = initCommit;
         }
+        createAndGetDirectoryAndFile(headCommit.toSHA1(), COMMITS);
         Commit nextStagedCommit = new Commit();
         nextStagedCommit.setParent(headCommit);
         nextStagedCommit.setStage(headCommit);
         headCommit.setNext(nextStagedCommit);
         writeCommit(nextStagedCommit, nextStagedCommit.toStatusSHA1(), STAGE);
         writeCommit(headCommit, headCommit.toSHA1(), OBJECTS);
+        writeCommit(headCommit, headCommit.toSHA1(), COMMITS);
         // Advance branch that is pointed by head
         Utils.writeContents(headBranchFile, headCommit.toSHA1());
+    }
+
+    public static void globalLog() {
+        logFile(COMMITS);
+    }
+
+    public static void logFile(File file) {
+        if (file.isFile()) {
+            Commit commit = Utils.readObject(file, Commit.class);
+            printCommitData(commit);
+            return;
+        }
+        for (File subFile : file.listFiles()) {
+            logFile(subFile);
+        }
     }
 
     public static void log() {
         Commit headCommit = getHeadCommit();
         Commit currentCommit = headCommit;
         while (currentCommit != null) {
-            System.out.println("===");
-            System.out.println("commit " + currentCommit.toSHA1());
-            System.out.println("Date: " + currentCommit.getDate());
-            System.out.println(currentCommit.getMessage());
-            System.out.println();
+            printCommitData(currentCommit);
             currentCommit = getCommit(currentCommit.getParent(), OBJECTS);
         }
+    }
+
+    public static void printCommitData(Commit currentCommit) {
+        System.out.println("===");
+        System.out.println("commit " + currentCommit.toSHA1());
+        System.out.println("Date: " + currentCommit.getDate());
+        System.out.println(currentCommit.getMessage());
+        System.out.println();
     }
 
     // Returns commit object based on SHA1 commit starting from directory
@@ -126,7 +146,6 @@ public class Repository {
         File restOfComIdFile = Utils.join(firstTwoCharComIdDir, restOfCommitID + ".txt");
         return Utils.readObject(restOfComIdFile, Commit.class);
     }
-
 
     private static Commit getHeadCommit() {
         File headBranchFile = getHeadBranchFile();
@@ -190,24 +209,6 @@ public class Repository {
     private static File getBlobFile(Commit commit, String fileName) {
         String fileSHA1 = commit.getFileSHA1(fileName);
         return createAndGetDirectoryAndFile(fileSHA1, OBJECTS);
-    }
-
-
-    private static void createCommitDirectory(Commit commit, File startingDirectory) {
-        String commitSHA1 = commit.toSHA1();
-        String firstTwoCharOfCommitID = commitSHA1.substring(0, 2);
-        String restOfCommitID = commitSHA1.substring(2);
-        File firstTwoCharComIdDir = Utils.join(startingDirectory, firstTwoCharOfCommitID);
-        if (!(firstTwoCharComIdDir.exists())) {
-            firstTwoCharComIdDir.mkdir();
-        }
-        File restOfComIdFile = Utils.join(firstTwoCharComIdDir, restOfCommitID + ".txt");
-        try {
-            restOfComIdFile.createNewFile();
-        } catch (IOException e) {
-            System.exit(0);
-        }
-        Utils.writeObject(restOfComIdFile, commit);
     }
 
     public static void deleteFiles() {
