@@ -93,7 +93,8 @@ public class Commit implements Serializable {
     }
 
     public boolean isStageable(String fileName, String fileToAddSHA1) {
-        return fileToSHA1.get(fileName) == null || !(fileToSHA1.get(fileName).equals(fileToAddSHA1));
+        Commit stagedCommit = getNextStagedCommit();
+        return stagedCommit.fileToSHA1.get(fileName) == null || !(stagedCommit.fileToSHA1.get(fileName).equals(fileToAddSHA1));
     }
 
     public void stageFile(String fileName) {
