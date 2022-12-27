@@ -229,7 +229,7 @@ public class Repository {
         return Utils.readObject(STAGE, Stage.class);
     }
 
-    public static void commit(String message) {
+    public static void commit(String message, Commit givenCommitForMerge) {
         Commit headCommit = getHeadCommit();
         File headBranchFile = getHeadBranchFile();
         Stage stage = getStage();
@@ -243,12 +243,29 @@ public class Repository {
                 System.exit(0);
             }
             Commit nextCommit = new Commit();
-            nextCommit.setParent(headCommit);
-            nextCommit.addCommitDetail(message);
-            nextCommit.addFilesFromStage(headCommit, stage);
-            headCommit.setNext(nextCommit);
+
+            if (givenCommitForMerge == null) {
+                nextCommit.setParent(headCommit);
+                nextCommit.addCommitDetail(message);
+                nextCommit.addFilesFromStage(headCommit, stage);
+                headCommit.setNext(nextCommit);
+            } else {
+                nextCommit.setParent(headCommit);
+                nextCommit.setParent(givenCommitForMerge);
+                nextCommit.addCommitDetail(message);
+                nextCommit.addFilesFromStage(headCommit, stage);
+                headCommit.setNext(nextCommit);
+                givenCommitForMerge.setNext(nextCommit);
+            }
+
             writeCommit(headCommit, headCommit.toSHA1(), OBJECTS);
             writeCommit(headCommit, headCommit.toSHA1(), COMMITS);
+
+            if (givenCommitForMerge != null) {
+                writeCommit(givenCommitForMerge, givenCommitForMerge.toSHA1(), OBJECTS);
+                writeCommit(givenCommitForMerge, givenCommitForMerge.toSHA1(), COMMITS);
+            }
+
             if (headCommit.getFirstParent() == null) {
                 Utils.writeObject(INITIAL_COMMIT, headCommit);
             }
@@ -264,6 +281,10 @@ public class Repository {
         writeCommit(headCommit, headCommit.toSHA1(), COMMITS);
         // Advance branch that is pointed by head
         Utils.writeContents(headBranchFile, headCommit.toSHA1());
+    }
+
+    public static void commit(String message) {
+        commit(message, null);
     }
 
     public static void reset(String commitId) {
@@ -619,6 +640,7 @@ public class Repository {
 
         String currentBranch = getBranchName(getHeadBranchFile().getName());
         String commitMessage = "Merged " + givenBranchName + " into " + currentBranch + ".";
+        commit(commitMessage, givenBranchCommit);
 
 
     }
