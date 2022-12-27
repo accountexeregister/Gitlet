@@ -229,9 +229,9 @@ public class Repository {
             Commit nextCommit = new Commit();
             nextCommit.setParent(headCommit);
             headCommit.setNext(nextCommit);
+            nextCommit.addCommitDetail(message);
             nextCommit.addFilesFromStage(headCommit, stage);
             headCommit = nextCommit;
-            headCommit.addCommitDetail(message);
             createBlobs(headCommit);
             stage.resetStage();
         } else {
