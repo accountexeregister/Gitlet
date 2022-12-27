@@ -139,6 +139,10 @@ public class Repository {
             if (fileName.equals(".gitlet")) {
                 continue;
             }
+
+            if (fileName.equals("gitlet")) {
+                continue;
+            }
             if (Utils.join(CWD, fileName).exists()) {
                 if (isNotStagedAfterModified(headCommit, stage, fileName)) {
                     System.out.println(fileName + " (modified)");
@@ -151,6 +155,9 @@ public class Repository {
         System.out.println("=== Untracked Files ===");
         for (String fileName : cwdAndStageFileList) {
             if (fileName.equals(".gitlet")) {
+                continue;
+            }
+            if (fileName.equals("gitlet")) {
                 continue;
             }
             if (Utils.join(CWD, fileName).exists()) {
@@ -313,6 +320,9 @@ public class Repository {
         Commit headCommit = getHeadCommit();
         for (File file : CWD.listFiles()) {
             if (file.getName().equals(".gitlet")) {
+                continue;
+            }
+            if (file.getName().equals("gitlet")) {
                 continue;
             }
             if (untrckedAndWillBeOverwritten(headCommit, commitToResetTo, stage, file)) {
@@ -535,6 +545,9 @@ public class Repository {
             if (file.getName().equals(".gitlet")) {
                 continue;
             }
+            if (file.getName().equals("gitlet")) {
+                continue;
+            }
             if (untrckedAndWillBeOverwritten(headCommit, branchCommit, stage, file)) {
                 System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                 System.exit(0);
@@ -700,6 +713,10 @@ public class Repository {
             if (fileName.equals(".gitlet")) {
                 continue;
             }
+
+            if (fileName.equals("gitlet")) {
+                continue;
+            }
             if (isInConflict(headCommit, givenBranchCommit, splitPoint, fileName)) {
                 hasCommit = true;
                 writeConflictInFile(headCommit, givenBranchCommit, fileName);
@@ -818,6 +835,7 @@ public class Repository {
         String commitFileSHA1 = commit.getFileSHA1(fileName);
         String splitPointFileSHA1 = splitPoint.getFileSHA1(fileName);
         return !splitPointFileSHA1.equals(commitFileSHA1);
+
     }
 
     public static void getSplitPointMessage(String branchName) {
