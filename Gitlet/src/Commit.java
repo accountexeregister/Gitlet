@@ -1,11 +1,12 @@
+import java.io.Serializable;
 import java.util.Calendar;
 
-public class Commit {
+public class Commit implements Serializable {
 
     private String message;
     private Calendar date;
     private String parent;
-    
+
     public Commit(String message) {
         this.message = message;
         date = Calendar.getInstance();
