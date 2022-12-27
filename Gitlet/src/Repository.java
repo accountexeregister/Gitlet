@@ -204,8 +204,9 @@ public class Repository {
             System.out.println("File does not exist.");
             System.exit(0);
         }
+        Stage stage = getStage();
         Commit headCommit = getHeadCommit();
-        headCommit.stageFile(fileName);
+        stage.stageFile(headCommit, fileName);
     }
 
     public static Stage getStage() {
