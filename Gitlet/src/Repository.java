@@ -25,6 +25,7 @@ public class Repository {
     // Directory that stores objects such as commits
     public static final File OBJECTS = Utils.join(GITLET_DIR, "objects");
     public static final File COMMITS = Utils.join(GITLET_DIR, "commits");
+    public static final File INITIAL_COMMIT = Utils.join(GITLET_DIR, "initialcommit.txt");
     public static final int SHA1_LENGTH = 40;
 
     public static void initGitlet() {
@@ -40,6 +41,7 @@ public class Repository {
         OBJECTS.mkdir();
         COMMITS.mkdir();
         try {
+            INITIAL_COMMIT.createNewFile();
             HEAD.createNewFile();
             STAGE.createNewFile();
             Stage initialStage = new Stage();
@@ -251,6 +253,7 @@ public class Repository {
             stage.resetStage();
         } else {
             Commit initCommit = Commit.createInitCommit();
+            Utils.writeObject(INITIAL_COMMIT, initCommit);
             headCommit = initCommit;
         }
         writeCommit(headCommit, headCommit.toSHA1(), OBJECTS);
@@ -515,8 +518,64 @@ public class Repository {
         String branchCommitId = getBranchCommitID(branchName + ".txt");
         Commit branchCommit = getCommit(branchCommitId, OBJECTS);
         Commit headCommit = getHeadCommit();
-        System.out.println(getSplitPoint(headCommit, branchCommit).getMessage());
+        System.out.println(getSplitPointNewTest(headCommit, branchCommit).getMessage());
     }
+
+    public static Commit getSplitPointNewTest(Commit currentCommit, Commit givenCommit) {
+        Commit initialCommit = Utils.readObject(INITIAL_COMMIT, Commit.class);
+        GitletGraph graph = createGraph(initialCommit);
+        GitletBreadthFirstPaths currentCommitBFS = new GitletBreadthFirstPaths(graph, currentCommit);
+        GitletBreadthFirstPaths givenCommitBFS = new GitletBreadthFirstPaths(graph, givenCommit);
+        SplitPointClass splitPointStruct = new SplitPointClass();
+        return getSplitPointBFS(splitPointStruct, currentCommit, givenCommit, initialCommit, currentCommitBFS, givenCommitBFS, 0, 0).getCurrentCommit();
+    }
+
+
+    private static SplitPointClass getSplitPointBFS(SplitPointClass splitPointStruct, Commit currentBranchCommit, Commit givenBranchCommit, Commit currentCommit,
+                                                    GitletBreadthFirstPaths currentBranchBFS, GitletBreadthFirstPaths givenBranchBFS,
+                                                    int currentBranchShortestPath, int givenBranchShortestPath) {
+
+        int currentBranchPath = currentBranchBFS.distanceTo(currentCommit);
+        int givenBranchPath = givenBranchBFS.distanceTo(currentCommit);
+
+        if (currentCommit.getFirstParent() != null) {
+            if (currentBranchPath > currentBranchShortestPath) {
+                return splitPointStruct;
+            }
+
+            if (givenBranchPath > givenBranchShortestPath) {
+                return splitPointStruct;
+            }
+        }
+
+        splitPointStruct.setCurrentBranchShortestPath(currentBranchPath);
+        splitPointStruct.setGivenBranchShortestPath(givenBranchPath);
+
+        splitPointStruct.setCurrentCommit(currentCommit);
+
+        for (String nextCommitId : currentCommit.getNextCommits()) {
+            Commit nextCommit = getCommit(nextCommitId, OBJECTS);
+            splitPointStruct = getSplitPointBFS(splitPointStruct, currentBranchCommit, givenBranchCommit, nextCommit,
+                    currentBranchBFS, givenBranchBFS, splitPointStruct.getCurrentBranchShortestPath(), splitPointStruct.getGivenBranchShortestPath());
+        }
+
+        return splitPointStruct;
+    }
+
+    private static GitletGraph createGraph(Commit initialCommit) {
+        GitletGraph graph = new GitletGraph();
+        addEdges(initialCommit, graph);
+        return graph;
+    }
+
+    private static void addEdges(Commit currentCommit, GitletGraph graph) {
+        for (String nextCommitId : currentCommit.getNextCommits()) {
+            Commit nextCommit = getCommit(nextCommitId, OBJECTS);
+            graph.addEdge(currentCommit, nextCommit);
+            addEdges(nextCommit, graph);
+        }
+    }
+
 
     private static Commit getSplitPoint(Commit currentCommit, Commit givenCommit) {
         if (currentCommit == null || givenCommit == null) {
