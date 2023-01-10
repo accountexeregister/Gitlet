@@ -1,5 +1,6 @@
 # Gitlet
-A lite version of Git, a version control system.
+A lite version of Git, a version control system.  
+Thanks to UC Berkeley for the Gitlet guidelines and utilities classes.
 
 Limitations:
 1) Gitlet ignores any subdirectories and only works for files made in the directory where Gitlet is initialised. For instance, if Gitlet is initialised in directory "GitletTest", Gitlet only works for files created in "GitletTest". If a subdirectory is made in "GitletTest", Gitlet will ignore the subdirectory.
